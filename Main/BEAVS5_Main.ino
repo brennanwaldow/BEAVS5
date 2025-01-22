@@ -11,6 +11,7 @@ Accelerometer: xxx
 
 
 // -----   Global Variables   -----
+const BEAVS_version = "5.0.0";
 
 // Initialization
 float launch_altitude = 0; // [meters]
@@ -45,10 +46,20 @@ void setup() {
 
 // -----   Control Loop   -----
 void loop() {
-    if (flight_phase == 0) { preflight_loop(); }
-    else if (flight_phase == 1) { ready_loop(); }
-    else if (flight_phase == 2) { flight_loop(); }
-    else if (flight_phase == 3) { coast_loop(); }
+    switch(flight_phase) {
+        case 0:
+            preflight_loop();
+            break;
+        case 1:
+            ready_loop();
+            break;
+        case 2:
+            flight_loop();
+            break;
+        case 3:
+            coast_loop();
+            break;
+    }
 }
 
 
