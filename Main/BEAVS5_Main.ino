@@ -83,15 +83,28 @@ void coast_loop() {
 
 // -----   Phase Changeovers   -----
 void arm() {
-    // SAFETY PIN REMOVED: Arm Beavs and initiate startup
+    // SAFETY PIN REMOVED: Arm BEAVS monitoring and initiate startup
+    flight_phase = 1;
+}
+
+void disarm() {
+    // SAFETY PIN REINSERTED: Return to Disarmed state
+    flight_phase = 0;
+}
+
+void launch() {
+    // ENGINE IGNITION: Arm BEAVS monitoring for cutoff
+    flight_phase = 2;
 }
 
 void coast() {
     // ENGINE CUTOFF: Deploy BEAVS
+    flight_phase = 3;
 }
 
 void descend() {
     // APOGEE REACHED: BEAVS safing, PID shutdown
+    flight_phase = 4;
 }
 
 
@@ -117,9 +130,12 @@ void velocity_lookup() {
 // Utility
 
 float feet_to_meters(float length) {     // length [feet]
-    return length / 3.281; // [meters]
+    return length / 3.28084; // [meters]
 }
 
 float meters_to_feet(float length) {     // length [meters]
-    return length * 3.281; // [feet]
+    return length * 3.28084; // [feet]
 }
+
+
+// If needed: utility functions for deployment ratio <--> servo degrees <--> c_d
