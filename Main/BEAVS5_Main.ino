@@ -1,9 +1,9 @@
 /*
 Hardware:
 ---
-Computer: Raspberry Pi Pico
-Altimeter: xxx
-Accelerometer: xxx
+Computer: Raspberry Pi Pico RP2040
+Altimeter: Adafruit BMP390
+Accelerometer: Adafruit BNO055 IMU
 */
 
 // -----   Libraries   -----
