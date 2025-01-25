@@ -13,13 +13,24 @@ Accelerometer: Adafruit BNO055 IMU
 using namespace std;
 
 
+// Utility
+
+float feet_to_meters(float length) {     // length [feet]
+    return length / 3.28084; // [meters]
+}
+
+float meters_to_feet(float length) {     // length [meters]
+    return length * 3.28084; // [feet]
+}
+
+
 // -----   Global Variables   -----
 String BEAVS_version = "5.0.0";
 
 // Initialization
 float launch_altitude = 0; // [meters]
 float launch_altimeter = 1013.25; // [HPa]
-float target_apogee = feet_to_meters(10000); // [meters], AGL
+float target_apogee = feet_to_meters(10000.0); // [meters], AGL
 
 // PID constants
 float kp = 6;
@@ -44,7 +55,7 @@ int flight_phase = 0;
 
 // -----   Power-On Boot   -----
 void setup() {
-
+  pinMode(LED_BUILTIN, OUTPUT);
 }
 
 // -----   Control Loop   -----
@@ -67,11 +78,19 @@ void loop() {
 
 
 void preflight_loop() {
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(500);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(1000);
 
+  if (millis() > 5000) arm();
 }
 
 void ready_loop() {
-
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(100);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(100);
 }
 
 void flight_loop() {
@@ -129,16 +148,6 @@ void velocity_lookup() {
 }
 
 
-
-// Utility
-
-float feet_to_meters(float length) {     // length [feet]
-    return length / 3.28084; // [meters]
-}
-
-float meters_to_feet(float length) {     // length [meters]
-    return length * 3.28084; // [feet]
-}
-
+// Utility functions
 
 // If needed: utility functions for deployment ratio <--> servo degrees <--> c_d
