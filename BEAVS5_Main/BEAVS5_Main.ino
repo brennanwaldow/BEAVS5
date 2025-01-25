@@ -8,10 +8,13 @@ Accelerometer: Adafruit BNO055 IMU
 
 // -----   Libraries   -----
 
+#include <string.h>
+
+using namespace std;
 
 
 // -----   Global Variables   -----
-const BEAVS_version = "5.0.0";
+String BEAVS_version = "5.0.0";
 
 // Initialization
 float launch_altitude = 0; // [meters]
