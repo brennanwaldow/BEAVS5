@@ -53,6 +53,8 @@ float velocity = 0; // [m/s]
 float acceleration = 0; // [m/s^2]
 long clock_time = 0; // [ms]
 
+float max_height = 0; // [meters]
+
 /* Flight Phase
 -- 0: Preflight Safe
 -- 1: Preflight Armed
@@ -110,7 +112,9 @@ void preflight_loop() {
 
   if (millis() > 3000) arm();
 
-  collect_telemetry();
+  // collect_telemetry();
+  get_trolled_idiot();
+  calculate_telemetry();
 }
 
 void ready_loop() {
@@ -119,15 +123,27 @@ void ready_loop() {
   // digitalWrite(LED_BUILTIN, LOW);
   // delay(100);
 
-  collect_telemetry();
+  // collect_telemetry();
+  get_trolled_idiot();
+  calculate_telemetry();
+
+  if (acceleration > 10) launch();
 }
 
 void flight_loop() {
-  collect_telemetry();
+  // collect_telemetry();
+  get_trolled_idiot();
+  calculate_telemetry();
+
+  if (acceleration < 5) coast();
 }
 
 void coast_loop() {
-  collect_telemetry();
+  // collect_telemetry();
+  get_trolled_idiot();
+  calculate_telemetry();
+
+  if (max_height > (height + 50)) descend();
 }
 
 
@@ -137,12 +153,12 @@ void arm() {
   // SAFETY PIN REMOVED: Arm BEAVS monitoring and initiate startup
   flight_phase = ARMED;
 
-  command_deflection(1);
-  delay(2000);
-  command_deflection(0.5);
-  delay(1000);
-  command_deflection(0);
-  delay(3000);
+  // command_deflection(1);
+  // delay(2000);
+  // command_deflection(0.5);
+  // delay(1000);
+  // command_deflection(0);
+  // delay(3000);
   command_deflection(-1);
 }
 
@@ -159,11 +175,13 @@ void launch() {
 void coast() {
   // ENGINE CUTOFF: Deploy BEAVS
   flight_phase = COAST;
+  command_deflection(1);
 }
 
 void descend() {
   // APOGEE REACHED: BEAVS safing, PID shutdown
   flight_phase = DESCENT;
+  command_deflection(0);
 }
 
 
@@ -175,6 +193,12 @@ void collect_telemetry() {
 
   float altitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
   height = altitude - launch_altitude;
+}
+
+void calculate_telemetry() {
+  if (height > max_height) {
+    max_height = height;
+  }
 }
 
 // Tick PID controller
@@ -209,6 +233,59 @@ void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full ex
 // Velocity lookup table
 void velocity_lookup() {
 
+}
+
+
+// Spoof telemetry data with real-time simulated flight
+// RUDIMENTARY SIMULATION: ONLY for validating logic behavior, NOT pid response
+void get_trolled_idiot() {
+  // Apogee: 3500m (11500 ft)
+
+  // Cd: ~ 0.6
+  // T = 3000 N
+  // Drag force max = 1000 N
+  // Mass = 27.6 kg, D = 15.6 cm
+
+  // Motor cutout at 4 s, apogee at 25
+
+  float Cd = 0.6;
+
+  double dt = (millis() - clock_time) / 1000.0;
+
+  // Launch
+  if (clock_time > 10000 && clock_time < 14000) {
+    acceleration = -9.81 + (3000 / 27.6);
+  } else {
+    acceleration = -9.81;
+  }
+
+  // Drag
+  int dir = 1;
+  if (velocity < 0) dir = -1;
+  acceleration = acceleration - (((0.5 * 1.225 * velocity * velocity * Cd * (0.191)) * dir) / 27.6);
+
+  float dv = acceleration * dt;
+
+  if (clock_time > 10000) velocity = velocity + dv;
+
+  float dh = velocity * dt;
+  height = height + dh;
+  if (height < 0) height = 0;
+
+  Serial.print(millis());
+  Serial.print(" ");
+  Serial.print(acceleration);
+  Serial.print(" ");
+  Serial.print(velocity);
+  Serial.print(" ");
+
+
+  Serial.print(height);
+  Serial.print(" ");
+  Serial.println(flight_phase);
+
+  clock_time = millis();
+  delay(5);
 }
 
 
