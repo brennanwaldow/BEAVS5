@@ -29,7 +29,7 @@ float meters_to_feet(float length) {     // length [meters]
 String BEAVS_version = "5.0.0";
 
 // Initialization
-float launch_altitude = 0; // [meters]
+float launch_altitude = 1380; // [meters]; Brothers, OR
 float launch_altimeter = 1013.25; // [HPa]
 float target_apogee = feet_to_meters(10000.0); // [meters], AGL
 
@@ -39,7 +39,7 @@ float target_apogee = feet_to_meters(10000.0); // [meters], AGL
 #define BMP_MOSI 1   // SDA pin
 Adafruit_BMP3XX bmp;
 
-// Pins
+// Servo
 int servo_pin = 28;
 
 // PID constants
@@ -62,7 +62,7 @@ float max_height = 0; // [meters]
 -- 3: Coast Phase (BEAVing)
 -- 4: Descent Phase
 */
-enum {PREFLIGHT, ARMED, FLIGHT, COAST, DESCENT};
+enum {PREFLIGHT, ARMED, FLIGHT, COAST, OVERSHOOT, DESCENT};
 int flight_phase = PREFLIGHT;
 
 
@@ -96,6 +96,9 @@ void loop() {
       break;
     case FLIGHT:
       flight_loop();
+      break;
+    case OVERSHOOT:
+      overshoot_loop();
       break;
     case COAST:
       coast_loop();
@@ -143,6 +146,19 @@ void coast_loop() {
   get_trolled_idiot();
   calculate_telemetry();
 
+  PID();
+
+  if (height > target_apogee) overshoot();
+
+  // TODO: Coordinate this criteria with Avionics/Recovery to minimize interference with separation
+  if (max_height > (height + 50)) descend();
+}
+
+void coast_loop() {
+  // collect_telemetry();
+  get_trolled_idiot();
+  calculate_telemetry();
+
   if (max_height > (height + 50)) descend();
 }
 
@@ -157,9 +173,9 @@ void arm() {
   // delay(2000);
   // command_deflection(0.5);
   // delay(1000);
-  // command_deflection(0);
-  // delay(3000);
-  command_deflection(-1);
+  command_deflection(0);
+
+  // Recalibrate launch ground level to current altitude?
 }
 
 void disarm() {
@@ -175,6 +191,12 @@ void launch() {
 void coast() {
   // ENGINE CUTOFF: Deploy BEAVS
   flight_phase = COAST;
+  command_deflection(1);
+}
+
+void overshoot() {
+  // APOGEE OVERSHOT: Last full extension regime on airbrake to minimize further overshoot
+  flight_phase = OVERSHOOT;
   command_deflection(1);
 }
 
