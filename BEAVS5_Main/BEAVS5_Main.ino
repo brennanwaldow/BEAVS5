@@ -54,6 +54,9 @@ float acceleration = 0; // [m/s^2]
 long clock_time = 0; // [ms]
 
 float max_height = 0; // [meters]
+long max_height_clock = 0; // [ms]
+
+float commanded_angle = 0; // [degrees; 0 to 180]
 
 /* Flight Phase
 -- 0: Preflight Safe
@@ -150,16 +153,21 @@ void coast_loop() {
 
   if (height > target_apogee) overshoot();
 
-  // TODO: Coordinate this criteria with Avionics/Recovery to minimize interference with separation
-  if (max_height > (height + 50)) descend();
+  if (max_height > height && (millis() - max_height_clock) > 500) {
+    descend();
+  }
 }
 
-void coast_loop() {
+void overshoot_loop() {
   // collect_telemetry();
   get_trolled_idiot();
   calculate_telemetry();
 
   if (max_height > (height + 50)) descend();
+
+  if (max_height > height && (millis() - max_height_clock) > 500) {
+    descend();
+  }
 }
 
 
@@ -169,10 +177,10 @@ void arm() {
   // SAFETY PIN REMOVED: Arm BEAVS monitoring and initiate startup
   flight_phase = ARMED;
 
-  // command_deflection(1);
-  // delay(2000);
-  // command_deflection(0.5);
-  // delay(1000);
+  command_deflection(1);
+  delay(2000);
+  command_deflection(0.5);
+  delay(1000);
   command_deflection(0);
 
   // Recalibrate launch ground level to current altitude?
@@ -220,6 +228,7 @@ void collect_telemetry() {
 void calculate_telemetry() {
   if (height > max_height) {
     max_height = height;
+    max_height_clock = millis();
   }
 }
 
@@ -239,6 +248,7 @@ void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full ex
 
   // Remap angle
   if (deflection > -1) angle = deflection * (max - min) + min;
+  commanded_angle = angle;
 
   int x = (max_pulse - min_pulse) * (angle / max) + min_pulse;
 
@@ -275,16 +285,14 @@ void get_trolled_idiot() {
   double dt = (millis() - clock_time) / 1000.0;
 
   // Launch
-  if (clock_time > 10000 && clock_time < 14000) {
-    acceleration = -9.81 + (3000 / 27.6);
-  } else {
-    acceleration = -9.81;
-  }
+  if (clock_time > 10000 && clock_time < 14000) acceleration = -9.81 + (3000 / 27.6);
+  else if (clock_time > 10000) acceleration = -9.81;
 
   // Drag
   int dir = 1;
   if (velocity < 0) dir = -1;
-  acceleration = acceleration - (((0.5 * 1.225 * velocity * velocity * Cd * (0.191)) * dir) / 27.6);
+  float Fd = (0.5 * 1.225 * velocity * velocity * Cd * (0.0191)) * dir;
+  acceleration = acceleration - (Fd / 27.6);
 
   float dv = acceleration * dt;
 
@@ -294,7 +302,7 @@ void get_trolled_idiot() {
   height = height + dh;
   if (height < 0) height = 0;
 
-  Serial.print(millis());
+  Serial.print((float) millis() / 1000 - 10);
   Serial.print(" ");
   Serial.print(acceleration);
   Serial.print(" ");
@@ -304,9 +312,14 @@ void get_trolled_idiot() {
 
   Serial.print(height);
   Serial.print(" ");
+  Serial.print(Fd);
+  Serial.print(" ");
+  Serial.print(commanded_angle);
+  Serial.print(" ");
   Serial.println(flight_phase);
-
+  
   clock_time = millis();
+
   delay(5);
 }
 
