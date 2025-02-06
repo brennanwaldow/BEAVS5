@@ -48,6 +48,7 @@ float ki = 1;
 float kd = 1;
 
 // Flight Computer
+float altitude = 0; // [meters]
 float height = 0; // [meters]
 float velocity = 0; // [m/s]
 float acceleration = 0; // [m/s^2]
@@ -275,34 +276,52 @@ void get_trolled_idiot() {
 
   // Cd: ~ 0.6
   // T = 3000 N
-  // Drag force max = 1000 N
-  // Mass = 27.6 kg, D = 15.6 cm
+  // Drag force max = 900 N at burnout
+  // Max velocity = 350 m/s at burnout
+  // Max acceleration = 120 m/s^2 at halfway burn
+  // Max deceleration = -45 m/s^2 at burnout
+  // Mass = 27.6 kg, mass at burnout = 22.9 kg, D = 15.6 cm
 
   // Motor cutout at 4 s, apogee at 25
 
-  float Cd = 0.6;
+  long launch_clock = millis() - 10000;
+
+  float speed_of_sound = (-0.0039042 * altitude) + 340.3;
+  float Mach = velocity / speed_of_sound;
+  float Cd = (0.0936073 * (Mach * Mach * Mach)) + (-0.0399526 * (Mach * Mach)) + (0.0455436 * Mach) + 0.582895;
+
+  float mass = max(22.9, (-0.00112172 * launch_clock) + 27.6);
 
   double dt = (millis() - clock_time) / 1000.0;
 
   // Launch
-  if (clock_time > 10000 && clock_time < 14000) acceleration = -9.81 + (3000 / 27.6);
-  else if (clock_time > 10000) acceleration = -9.81;
+  // if (clock_time > 10000 && clock_time < 14000) acceleration = -9.81 + (3000 / 27.6);
+  // else if (clock_time > 10000) acceleration = -9.81;
+
+  float thrust = 0;
+
+  if (launch_clock > 0 && launch_clock <= 1590) thrust = (0.658927 * launch_clock) + 2446.50196;
+  else if (launch_clock > 1590 && launch_clock <= 3240) thrust = (-0.373939 * launch_clock) + 4105.56364;
+  else if (launch_clock > 3240 && launch_clock <= 4190) thrust = (-3.04632 * launch_clock) + 12764.0632;
+  // else if (launch_clock > 4190) return;
+  
+  if (launch_clock > 0) acceleration = -9.81 + (thrust / mass);
 
   // Drag
   int dir = 1;
   if (velocity < 0) dir = -1;
   float Fd = (0.5 * 1.225 * velocity * velocity * Cd * (0.0191)) * dir;
-  acceleration = acceleration - (Fd / 27.6);
+  acceleration = acceleration - (Fd / mass);
 
   float dv = acceleration * dt;
 
-  if (clock_time > 10000) velocity = velocity + dv;
+  if (launch_clock > 0) velocity = velocity + dv;
 
   float dh = velocity * dt;
   height = height + dh;
   if (height < 0) height = 0;
 
-  Serial.print((float) millis() / 1000 - 10);
+  Serial.print((float) launch_clock / 1000.0);
   Serial.print(" ");
   Serial.print(acceleration);
   Serial.print(" ");
@@ -314,13 +333,13 @@ void get_trolled_idiot() {
   Serial.print(" ");
   Serial.print(Fd);
   Serial.print(" ");
-  Serial.print(commanded_angle);
+  Serial.print(thrust);
   Serial.print(" ");
   Serial.println(flight_phase);
   
   clock_time = millis();
 
-  delay(5);
+  delay(100);
 }
 
 
