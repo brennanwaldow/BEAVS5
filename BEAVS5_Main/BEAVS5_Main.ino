@@ -29,6 +29,9 @@ float meters_to_feet(float length) {     // length [meters]
 String BEAVS_version = "5.0.0";
 
 // Initialization
+enum { SIM, FIELD };
+int BEAVS_mode = SIM;
+
 enum { SEA_LEVEL = 0, BROTHERS_OR = 1380 };
 float launch_altitude = SEA_LEVEL; // [meters]
 float launch_altimeter = 1013.25; // [HPa]
@@ -51,8 +54,8 @@ float kd = 1;
 // Flight Computer
 float altitude = launch_altitude; // [meters]
 float height = 0; // [meters]
-float velocity = 0; // [m/s]
-float acceleration = 0; // [m/s^2]
+double velocity = 0; // [m/s]
+double acceleration = 0; // [m/s^2]
 long clock_time = 0; // [ms]
 
 float max_height = 0; // [meters]
@@ -68,7 +71,7 @@ float virtual_angle = 0; // [degrees; 0 to 180]
 -- 3: Coast Phase (BEAVing)
 -- 4: Descent Phase
 */
-enum {PREFLIGHT, ARMED, FLIGHT, COAST, OVERSHOOT, DESCENT};
+enum { PREFLIGHT, ARMED, FLIGHT, COAST, OVERSHOOT, DESCENT };
 int flight_phase = PREFLIGHT;
 
 
@@ -124,8 +127,7 @@ void preflight_loop() {
 
   if (millis() > 3000) arm();
 
-  // collect_telemetry();
-  get_trolled_idiot();
+  collect_telemetry();
   calculate_telemetry();
 }
 
@@ -135,24 +137,21 @@ void ready_loop() {
   // digitalWrite(LED_BUILTIN, LOW);
   // delay(100);
 
-  // collect_telemetry();
-  get_trolled_idiot();
+  collect_telemetry();
   calculate_telemetry();
 
   if (acceleration > 10) launch();
 }
 
 void flight_loop() {
-  // collect_telemetry();
-  get_trolled_idiot();
+  collect_telemetry();
   calculate_telemetry();
 
   if (acceleration < 5) coast();
 }
 
 void coast_loop() {
-  // collect_telemetry();
-  get_trolled_idiot();
+  collect_telemetry();
   calculate_telemetry();
 
   PID();
@@ -165,8 +164,7 @@ void coast_loop() {
 }
 
 void overshoot_loop() {
-  // collect_telemetry();
-  get_trolled_idiot();
+  collect_telemetry();
   calculate_telemetry();
 
   if (max_height > (height + 50)) descend();
@@ -177,7 +175,7 @@ void overshoot_loop() {
 }
 
 void descend_loop() {
-  // get_trolled_idiot();
+  // collect_telemetry();
   // calculate_telemetry();
 }
 
@@ -230,10 +228,13 @@ void descend() {
 // -----   Functions   -----
 
 void collect_telemetry() {
-  bmp.performReading();
+  if (BEAVS_mode == SIM) get_trolled_idiot();
+  else {
+    bmp.performReading();
 
-  float altitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
-  height = altitude - launch_altitude;
+    float altitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
+    height = altitude - launch_altitude;
+  }
 }
 
 void calculate_telemetry() {
@@ -305,18 +306,14 @@ void get_trolled_idiot() {
   float mass = 22.863;
   if (launch_clock >= 0 && launch_clock < 4260) mass = (1.74432 * pow(10, -7) * pow(launch_clock, 2)) + (-0.00191159 * launch_clock) + 27.87811;
 
-  double dt = (millis() - clock_time) / 1000.0;
+  double dt = (micros() - clock_time) / (double) 1000000;
 
   // Launch
-  // if (clock_time > 10000 && clock_time < 14000) acceleration = -9.81 + (3000 / 27.6);
-  // else if (clock_time > 10000) acceleration = -9.81;
-
   float thrust = 0;
 
   if (launch_clock > 0 && launch_clock <= 1590) thrust = (0.662162 * launch_clock) + 2458.16216;
   else if (launch_clock > 1590 && launch_clock <= 3240) thrust = (-0.000111179 * pow(launch_clock, 2)) + (0.171212 * launch_clock) + 3507.36323;
   else if (launch_clock > 3240 && launch_clock <= 4190) thrust = (-3.04632 * launch_clock) + 12764.0632;
-  // else if (launch_clock > 4190) return;
 
   float gravity_accel = (-0.00000325714 * altitude) + 9.80714;
   
@@ -328,11 +325,11 @@ void get_trolled_idiot() {
   float Fd = (0.5 * air_density * velocity * velocity * Cd * (0.019009)) * dir;
   acceleration = acceleration - (Fd / mass);
 
-  float dv = acceleration * dt;
+  double dv = acceleration * dt;
 
   if (launch_clock > 0) velocity = velocity + dv;
 
-  float dh = velocity * dt;
+  double dh = velocity * dt;
   altitude = altitude + dh;
   if (altitude < launch_altitude) altitude = launch_altitude;
   
@@ -360,9 +357,9 @@ void get_trolled_idiot() {
   Serial.print(" ");
   Serial.println(flight_phase);
   
-  clock_time = millis();
+  clock_time = micros();
 
-  delay(145);
+  delay(142);
 }
 
 
