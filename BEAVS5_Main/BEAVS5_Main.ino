@@ -29,7 +29,8 @@ float meters_to_feet(float length) {     // length [meters]
 String BEAVS_version = "5.0.0";
 
 // Initialization
-float launch_altitude = 1380; // [meters]; Brothers, OR
+enum { SEA_LEVEL = 0, BROTHERS_OR = 1380 };
+float launch_altitude = SEA_LEVEL; // [meters]
 float launch_altimeter = 1013.25; // [HPa]
 float target_apogee = feet_to_meters(10000.0); // [meters], AGL
 
@@ -48,7 +49,7 @@ float ki = 1;
 float kd = 1;
 
 // Flight Computer
-float altitude = 0; // [meters]
+float altitude = launch_altitude; // [meters]
 float height = 0; // [meters]
 float velocity = 0; // [m/s]
 float acceleration = 0; // [m/s^2]
@@ -58,6 +59,7 @@ float max_height = 0; // [meters]
 long max_height_clock = 0; // [ms]
 
 float commanded_angle = 0; // [degrees; 0 to 180]
+float virtual_angle = 0; // [degrees; 0 to 180]
 
 /* Flight Phase
 -- 0: Preflight Safe
@@ -106,6 +108,9 @@ void loop() {
       break;
     case COAST:
       coast_loop();
+      break;
+    case DESCENT:
+      descend_loop();
       break;
   }
 }
@@ -171,6 +176,11 @@ void overshoot_loop() {
   }
 }
 
+void descend_loop() {
+  // get_trolled_idiot();
+  // calculate_telemetry();
+}
+
 
 
 // -----   Phase Changeovers   -----
@@ -227,6 +237,7 @@ void collect_telemetry() {
 }
 
 void calculate_telemetry() {
+  height = altitude - launch_altitude;
   if (height > max_height) {
     max_height = height;
     max_height_clock = millis();
@@ -272,7 +283,7 @@ void velocity_lookup() {
 // Spoof telemetry data with real-time simulated flight
 // RUDIMENTARY SIMULATION: ONLY for validating logic behavior, NOT pid response
 void get_trolled_idiot() {
-  // Apogee: 3500m (11500 ft)
+  // Apogee: 3493m (11459 ft)
 
   // Cd: ~ 0.6
   // T = 3000 N
@@ -282,15 +293,17 @@ void get_trolled_idiot() {
   // Max deceleration = -45 m/s^2 at burnout
   // Mass = 27.6 kg, mass at burnout = 22.9 kg, D = 15.6 cm
 
-  // Motor cutout at 4 s, apogee at 25
+  // Motor cutout at 4 s, apogee at 25.03
 
   long launch_clock = millis() - 10000;
 
   float speed_of_sound = (-0.0039042 * altitude) + 340.3;
-  float Mach = velocity / speed_of_sound;
+  float Mach = abs(velocity) / speed_of_sound;
   float Cd = (0.0936073 * (Mach * Mach * Mach)) + (-0.0399526 * (Mach * Mach)) + (0.0455436 * Mach) + 0.582895;
+  float air_density = (-6.85185 * (pow(10, -14)) * pow(altitude, 3)) + (4.30675 * (pow(10, -9)) * pow(altitude, 2)) + (-0.0001176 * altitude) + 1.22499;
 
-  float mass = max(22.9, (-0.00112172 * launch_clock) + 27.6);
+  float mass = 22.863;
+  if (launch_clock >= 0 && launch_clock < 4260) mass = (1.74432 * pow(10, -7) * pow(launch_clock, 2)) + (-0.00191159 * launch_clock) + 27.87811;
 
   double dt = (millis() - clock_time) / 1000.0;
 
@@ -300,17 +313,19 @@ void get_trolled_idiot() {
 
   float thrust = 0;
 
-  if (launch_clock > 0 && launch_clock <= 1590) thrust = (0.658927 * launch_clock) + 2446.50196;
-  else if (launch_clock > 1590 && launch_clock <= 3240) thrust = (-0.373939 * launch_clock) + 4105.56364;
+  if (launch_clock > 0 && launch_clock <= 1590) thrust = (0.662162 * launch_clock) + 2458.16216;
+  else if (launch_clock > 1590 && launch_clock <= 3240) thrust = (-0.000111179 * pow(launch_clock, 2)) + (0.171212 * launch_clock) + 3507.36323;
   else if (launch_clock > 3240 && launch_clock <= 4190) thrust = (-3.04632 * launch_clock) + 12764.0632;
   // else if (launch_clock > 4190) return;
+
+  float gravity_accel = (-0.00000325714 * altitude) + 9.80714;
   
-  if (launch_clock > 0) acceleration = -9.81 + (thrust / mass);
+  if (launch_clock > 0) acceleration = -(gravity_accel) + (thrust / mass);
 
   // Drag
   int dir = 1;
   if (velocity < 0) dir = -1;
-  float Fd = (0.5 * 1.225 * velocity * velocity * Cd * (0.0191)) * dir;
+  float Fd = (0.5 * air_density * velocity * velocity * Cd * (0.019009)) * dir;
   acceleration = acceleration - (Fd / mass);
 
   float dv = acceleration * dt;
@@ -318,8 +333,12 @@ void get_trolled_idiot() {
   if (launch_clock > 0) velocity = velocity + dv;
 
   float dh = velocity * dt;
-  height = height + dh;
-  if (height < 0) height = 0;
+  altitude = altitude + dh;
+  if (altitude < launch_altitude) altitude = launch_altitude;
+  
+  // Smoothly adjust physical blade angle based on servo speed
+  if (commanded_angle > virtual_angle) virtual_angle = virtual_angle + min(commanded_angle - virtual_angle, (60.0 / 0.13) * dt);
+  else if (commanded_angle < virtual_angle) virtual_angle = virtual_angle + max(commanded_angle - virtual_angle, -(60.0 / 0.13) * dt);
 
   Serial.print((float) launch_clock / 1000.0);
   Serial.print(" ");
@@ -335,11 +354,15 @@ void get_trolled_idiot() {
   Serial.print(" ");
   Serial.print(thrust);
   Serial.print(" ");
+  Serial.print(Mach);
+  Serial.print(" ");
+  Serial.print(virtual_angle);
+  Serial.print(" ");
   Serial.println(flight_phase);
   
   clock_time = millis();
 
-  delay(100);
+  delay(145);
 }
 
 
