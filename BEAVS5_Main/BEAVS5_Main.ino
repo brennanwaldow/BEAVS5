@@ -12,6 +12,8 @@ Servo: DS3235
 #include <SPI.h>
 #include <Adafruit_Sensor.h>
 #include "Adafruit_BMP3XX.h"
+#include <Adafruit_BNO055.h>
+#include <utility/imumaths.h>
 
 
 // Utility
@@ -30,7 +32,7 @@ String BEAVS_version = "5.0.0";
 
 // Initialization
 enum { SIM, FIELD };
-int BEAVS_mode = SIM;
+int BEAVS_mode = FIELD;
 
 enum { SEA_LEVEL = 0, BROTHERS_OR = 1380 };
 float launch_altitude = SEA_LEVEL; // [meters]
@@ -38,10 +40,12 @@ float launch_altimeter = 1013.25; // [HPa]
 float target_apogee = feet_to_meters(10000.0); // [meters], AGL
 
 // BMP390
+#define WIRE Wire
 #define SEALEVELPRESSURE_HPA (launch_altimeter)
-#define BMP_SCK 2   // vvv TEMPORARY PINS: Reassign for PCB layout
-#define BMP_MOSI 1   // SDA pin
 Adafruit_BMP3XX bmp;
+
+// BNO055
+Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 
 // Servo
 int servo_pin = 28;
@@ -78,18 +82,25 @@ int flight_phase = PREFLIGHT;
 // -----   Power-On Boot   -----
 void setup() {
   Serial.begin(115200);
-  pinMode(LED_BUILTIN, OUTPUT);
+  while(!Serial) delay(10);
 
-  bmp.begin_I2C();
+  Serial.println("Starting up hardware...");
+
+  Wire.begin();
+
+  if (!bmp.begin_I2C(0x77)) Serial.println("BMP390 invalid!");
 
   bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
   bmp.setPressureOversampling(BMP3_OVERSAMPLING_16X);
   bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
   bmp.setOutputDataRate(BMP3_ODR_50_HZ);
 
-  pinMode(servo_pin, OUTPUT);
+  if (!bno.begin()) Serial.println("BNO055 invalid!");
 
-  // Ensure servo is stowed
+  pinMode(servo_pin, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  // Ensure servo is fully stowed
   command_deflection(-1);
 }
 
@@ -230,10 +241,24 @@ void descend() {
 void collect_telemetry() {
   if (BEAVS_mode == SIM) get_trolled_idiot();
   else {
-    bmp.performReading();
+    // BMP390
+    if (!bmp.performReading()) Serial.println("BMP390 Reading failed!");
 
     float altitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
-    height = altitude - launch_altitude;
+
+    Serial.println(altitude);
+
+    
+    // BNO055
+    sensors_event_t accelerometer;
+    bno.getEvent(&accelerometer, Adafruit_BNO055::VECTOR_ACCELEROMETER);
+
+    sensors_event_t* event = &accelerometer;
+    event->type == SENSOR_TYPE_ACCELEROMETER;
+    acceleration = -(event->acceleration.z);
+
+    // Serial.println(acceleration);
+    delay(50);
   }
 }
 
