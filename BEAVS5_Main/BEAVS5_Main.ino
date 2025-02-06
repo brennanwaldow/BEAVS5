@@ -36,7 +36,7 @@ int BEAVS_mode = FIELD;
 
 enum { SEA_LEVEL = 0, BROTHERS_OR = 1380 };
 float launch_altitude = SEA_LEVEL; // [meters]
-float launch_altimeter = 1013.25; // [HPa]
+float launch_altimeter = 1017.27; // [HPa]
 float target_apogee = feet_to_meters(10000.0); // [meters], AGL
 
 // BMP390
@@ -359,8 +359,8 @@ void get_trolled_idiot() {
   if (altitude < launch_altitude) altitude = launch_altitude;
   
   // Smoothly adjust physical blade angle based on servo speed
-  if (commanded_angle > virtual_angle) virtual_angle = virtual_angle + min(commanded_angle - virtual_angle, (60.0 / 0.13) * dt);
-  else if (commanded_angle < virtual_angle) virtual_angle = virtual_angle + max(commanded_angle - virtual_angle, -(60.0 / 0.13) * dt);
+  if (commanded_angle > virtual_angle) virtual_angle = virtual_angle + min(commanded_angle - virtual_angle, (180.0 / 1.0) * dt);
+  else if (commanded_angle < virtual_angle) virtual_angle = virtual_angle + max(commanded_angle - virtual_angle, -(180.0 / 1.0) * dt);
 
   Serial.print((float) launch_clock / 1000.0);
   Serial.print(" ");
