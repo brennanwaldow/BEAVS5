@@ -32,7 +32,7 @@ String BEAVS_version = "5.0.0";
 
 // Initialization
 enum { SIM, FIELD };
-int BEAVS_mode = FIELD;
+int BEAVS_mode = SIM;
 
 enum { SEA_LEVEL = 0, BROTHERS_OR = 1380 };
 float launch_altitude = SEA_LEVEL; // [meters]
@@ -96,6 +96,7 @@ void setup() {
   bmp.setOutputDataRate(BMP3_ODR_50_HZ);
 
   if (!bno.begin()) Serial.println("BNO055 invalid!");
+  bno.setExtCrystalUse(true);
 
   pinMode(servo_pin, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
@@ -106,7 +107,6 @@ void setup() {
 
 // -----   Control Loop   -----
 void loop() {
-
   switch(flight_phase) {
     case PREFLIGHT:
       preflight_loop();
@@ -219,7 +219,7 @@ void launch() {
 void coast() {
   // ENGINE CUTOFF: Deploy BEAVS
   flight_phase = COAST;
-  command_deflection(1);
+  command_deflection(0.8);
 }
 
 void overshoot() {
@@ -257,7 +257,7 @@ void collect_telemetry() {
     event->type == SENSOR_TYPE_ACCELEROMETER;
     acceleration = -(event->acceleration.z);
 
-    // Serial.println(acceleration);
+    Serial.println(acceleration);
     delay(50);
   }
 }
@@ -384,7 +384,7 @@ void get_trolled_idiot() {
   
   clock_time = micros();
 
-  delay(142);
+  delay(75);
 }
 
 
