@@ -26,6 +26,10 @@ float meters_to_feet(float length) {     // length [meters]
   return length * 3.28084; // [feet]
 }
 
+float inhg_to_hpa(float pressure) {     // pressure [inches mercury]
+  return pressure * 33.863889532611; // [ HPa ]
+}
+
 
 // -----   Global Variables   -----
 String BEAVS_version = "5.0.0";
@@ -36,7 +40,7 @@ int BEAVS_mode = FIELD;
 
 enum { SEA_LEVEL = 0, BROTHERS_OR = 1380 };
 float launch_altitude = SEA_LEVEL; // [meters]
-float launch_altimeter = 1017.27; // [HPa]
+float launch_altimeter = inhg_to_hpa(30.49); // [HPa]
 float target_apogee = feet_to_meters(10000.0); // [meters], AGL
 
 // BMP390
@@ -246,20 +250,30 @@ void collect_telemetry() {
     // BMP390
     if (!bmp.performReading()) Serial.println("BMP390 Reading failed!");
 
-    float altitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
+    float prev_altitude = altitude;
+    altitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
     // Serial.println(altitude);
 
+    double dt = (micros() - clock_time) / (double) 1000000;
+    velocity = (altitude - prev_altitude) / dt;
+    clock_time = micros();
     
     // BNO055
     sensors_event_t accelerometer;
     bno.getEvent(&accelerometer, Adafruit_BNO055::VECTOR_ACCELEROMETER);
 
-    // TODO: 3-axis -> magnitude
+    // TODO: 3-axis -> magnitude?
     sensors_event_t* event = &accelerometer;
     event->type == SENSOR_TYPE_ACCELEROMETER;
     acceleration = -(event->acceleration.z) + gravity(altitude);
 
-    Serial.println(acceleration);
+    Serial.print(altitude);
+    Serial.print(" ");
+    Serial.print(prev_altitude);
+    Serial.print(" ");
+    Serial.print(dt);
+    Serial.print(" ");
+    Serial.println(velocity);
     delay(50);
   }
 }
@@ -362,25 +376,33 @@ void get_trolled_idiot() {
   if (commanded_angle > virtual_angle) virtual_angle = virtual_angle + min(commanded_angle - virtual_angle, (180.0 / 1.0) * dt);
   else if (commanded_angle < virtual_angle) virtual_angle = virtual_angle + max(commanded_angle - virtual_angle, -(180.0 / 1.0) * dt);
 
+  // Serial.print((float) launch_clock / 1000.0);
+  // Serial.print(" ");
+  // Serial.print(acceleration);
+  // Serial.print(" ");
+  // Serial.print(velocity);
+  // Serial.print(" ");
+
+
+  // Serial.print(height);
+  // Serial.print(" ");
+  // Serial.print(Fd);
+  // Serial.print(" ");
+  // Serial.print(thrust);
+  // Serial.print(" ");
+  // Serial.print(Mach);
+  // Serial.print(" ");
+  // Serial.print(virtual_angle);
+  // Serial.print(" ");
+  // Serial.println(flight_phase);
+
   Serial.print((float) launch_clock / 1000.0);
-  Serial.print(" ");
+  Serial.print(",");
   Serial.print(acceleration);
-  Serial.print(" ");
+  Serial.print(",");
   Serial.print(velocity);
-  Serial.print(" ");
-
-
-  Serial.print(height);
-  Serial.print(" ");
-  Serial.print(Fd);
-  Serial.print(" ");
-  Serial.print(thrust);
-  Serial.print(" ");
-  Serial.print(Mach);
-  Serial.print(" ");
-  Serial.print(virtual_angle);
-  Serial.print(" ");
-  Serial.println(flight_phase);
+  Serial.print(",");
+  Serial.println(height);
   
   clock_time = micros();
 
