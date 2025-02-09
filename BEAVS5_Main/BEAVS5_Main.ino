@@ -32,7 +32,7 @@ String BEAVS_version = "5.0.0";
 
 // Initialization
 enum { SIM, FIELD };
-int BEAVS_mode = SIM;
+int BEAVS_mode = FIELD;
 
 enum { SEA_LEVEL = 0, BROTHERS_OR = 1380 };
 float launch_altitude = SEA_LEVEL; // [meters]
@@ -82,7 +82,8 @@ int flight_phase = PREFLIGHT;
 // -----   Power-On Boot   -----
 void setup() {
   Serial.begin(115200);
-  while(!Serial) delay(10);
+  // Wait for serial to initialize
+  delay(500);
 
   Serial.println("Starting up hardware...");
 
@@ -169,6 +170,7 @@ void coast_loop() {
 
   if (height > target_apogee) overshoot();
 
+  // TODO the altitude reading is TOO NOISY for this cutoff: will have to add additional conditions
   if (max_height > height && (millis() - max_height_clock) > 500) {
     descend();
   }
@@ -245,17 +247,17 @@ void collect_telemetry() {
     if (!bmp.performReading()) Serial.println("BMP390 Reading failed!");
 
     float altitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
-
-    Serial.println(altitude);
+    // Serial.println(altitude);
 
     
     // BNO055
     sensors_event_t accelerometer;
     bno.getEvent(&accelerometer, Adafruit_BNO055::VECTOR_ACCELEROMETER);
 
+    // TODO: 3-axis -> magnitude
     sensors_event_t* event = &accelerometer;
     event->type == SENSOR_TYPE_ACCELEROMETER;
-    acceleration = -(event->acceleration.z);
+    acceleration = -(event->acceleration.z) + gravity(altitude);
 
     Serial.println(acceleration);
     delay(50);
@@ -339,10 +341,8 @@ void get_trolled_idiot() {
   if (launch_clock > 0 && launch_clock <= 1590) thrust = (0.662162 * launch_clock) + 2458.16216;
   else if (launch_clock > 1590 && launch_clock <= 3240) thrust = (-0.000111179 * pow(launch_clock, 2)) + (0.171212 * launch_clock) + 3507.36323;
   else if (launch_clock > 3240 && launch_clock <= 4190) thrust = (-3.04632 * launch_clock) + 12764.0632;
-
-  float gravity_accel = (-0.00000325714 * altitude) + 9.80714;
   
-  if (launch_clock > 0) acceleration = -(gravity_accel) + (thrust / mass);
+  if (launch_clock > 0) acceleration = -(gravity(altitude)) + (thrust / mass);
 
   // Drag
   int dir = 1;
@@ -389,5 +389,10 @@ void get_trolled_idiot() {
 
 
 // Utility functions
+
+float gravity(float altitude) {          // altitude [meters]
+  return (-0.00000325714 * altitude) + 9.80714; // acceleration magnitude [m/s^2]
+}
+
 
 // If needed: utility functions for deployment ratio <--> servo degrees <--> c_d
