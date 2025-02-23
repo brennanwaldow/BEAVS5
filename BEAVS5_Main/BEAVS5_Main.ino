@@ -36,7 +36,7 @@ String BEAVS_version = "5.0.0";
 
 // Initialization
 enum { SIM, FIELD };
-int BEAVS_mode = FIELD;
+int BEAVS_mode = SIM;
 
 enum { SEA_LEVEL = 0, BROTHERS_OR = 1380 };
 float launch_altitude = SEA_LEVEL; // [meters]
@@ -65,6 +65,7 @@ float height = 0; // [meters]
 double velocity = 0; // [m/s]
 double acceleration = 0; // [m/s^2]
 long clock_time = 0; // [ms]
+long pid_clock_time = 0; // [ms]
 
 float max_height = 0; // [meters]
 long max_height_clock = 0; // [ms]
@@ -288,7 +289,11 @@ void calculate_telemetry() {
 
 // Tick PID controller
 void PID() {
+  double dt = (micros() - pid_clock_time) / (double) 1000000;
 
+  // target_velocity = 
+
+  pid_clock_time = micros();
 }
 
 void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full extend); or -1 for full retract (inside tube Inner Diameter)
@@ -317,8 +322,17 @@ void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full ex
 }
 
 // Velocity lookup table
-void velocity_lookup() {
+float velocity_lookup() {
+  // Shamelessly stolen polynomial constants from BEAVS4
+  // THESE ARE NOT FOR 2025 ROCKET DRAG
+  // TODO UPDATE WHEN OPENROCKET FINALIZED
+  float a = -2.197790209276072e-9;
+  float b =  1.424454885385808e-6;
+  float c = -2.425899535946396e-4;
+  float d = -0.031992842779187;
+  float e = -0.261849939656465;
 
+  return (a * pow(height, 4)) + (b * pow(height, 3)) + (c * pow(height, 2)) + (d * height) + e;
 }
 
 
@@ -341,7 +355,7 @@ void get_trolled_idiot() {
 
   float speed_of_sound = (-0.0039042 * altitude) + 340.3;
   float Mach = abs(velocity) / speed_of_sound;
-  float Cd = (0.0936073 * (Mach * Mach * Mach)) + (-0.0399526 * (Mach * Mach)) + (0.0455436 * Mach) + 0.582895;
+  float Cd_rocket = (0.0936073 * (Mach * Mach * Mach)) + (-0.0399526 * (Mach * Mach)) + (0.0455436 * Mach) + 0.582895;
   float air_density = (-6.85185 * (pow(10, -14)) * pow(altitude, 3)) + (4.30675 * (pow(10, -9)) * pow(altitude, 2)) + (-0.0001176 * altitude) + 1.22499;
 
   float mass = 22.863;
@@ -361,7 +375,17 @@ void get_trolled_idiot() {
   // Drag
   int dir = 1;
   if (velocity < 0) dir = -1;
-  float Fd = (0.5 * air_density * velocity * velocity * Cd * (0.019009)) * dir;
+
+  // TODO: is this right? it seems low for 6in diameter
+  float A_ref = 0.019009;
+  float virtual_deflection = max((virtual_angle - 50) / (180 - 50), 0);
+  // TODO: Caliper time (measure the Metalbeav)
+  float A_beavs = (((1.8 / 12) * (2.490 / 12)) * 2) * virtual_deflection;
+  // TODO: Polyfit from Ansys Fluent god help us
+  float Cd_beavs = 4.8 * (sqrt(A_beavs / A_ref));
+  float Cd = Cd_rocket + (Cd_beavs * (A_beavs / A_ref));
+
+  float Fd = (0.5 * air_density * (velocity * velocity) * Cd * A_ref) * dir;
   acceleration = acceleration - (Fd / mass);
 
   double dv = acceleration * dt;
@@ -373,36 +397,37 @@ void get_trolled_idiot() {
   if (altitude < launch_altitude) altitude = launch_altitude;
   
   // Smoothly adjust physical blade angle based on servo speed
+  // TODO: Slowmo stopwatch for precise time after integrating on Metalbeav for speed under torque loading
   if (commanded_angle > virtual_angle) virtual_angle = virtual_angle + min(commanded_angle - virtual_angle, (180.0 / 1.0) * dt);
   else if (commanded_angle < virtual_angle) virtual_angle = virtual_angle + max(commanded_angle - virtual_angle, -(180.0 / 1.0) * dt);
 
-  // Serial.print((float) launch_clock / 1000.0);
-  // Serial.print(" ");
-  // Serial.print(acceleration);
-  // Serial.print(" ");
-  // Serial.print(velocity);
-  // Serial.print(" ");
+  Serial.print((float) launch_clock / 1000.0);
+  Serial.print(" ");
+  Serial.print(acceleration);
+  Serial.print(" ");
+  Serial.print(velocity);
+  Serial.print(" ");
 
 
-  // Serial.print(height);
-  // Serial.print(" ");
+  Serial.print(height);
+  Serial.print(" ");
   // Serial.print(Fd);
   // Serial.print(" ");
   // Serial.print(thrust);
   // Serial.print(" ");
   // Serial.print(Mach);
   // Serial.print(" ");
-  // Serial.print(virtual_angle);
+  Serial.println(virtual_angle);
   // Serial.print(" ");
   // Serial.println(flight_phase);
 
-  Serial.print((float) launch_clock / 1000.0);
-  Serial.print(",");
-  Serial.print(acceleration);
-  Serial.print(",");
-  Serial.print(velocity);
-  Serial.print(",");
-  Serial.println(height);
+  // Serial.print((float) launch_clock / 1000.0);
+  // Serial.print(",");
+  // Serial.print(acceleration);
+  // Serial.print(",");
+  // Serial.print(velocity);
+  // Serial.print(",");
+  // Serial.println(height);
   
   clock_time = micros();
 
