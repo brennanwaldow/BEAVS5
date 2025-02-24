@@ -438,6 +438,8 @@ void get_trolled_idiot() {
   Serial.print(" ");
   Serial.print(Cd_rocket);
   Serial.print(" ");
+  Serial.print(Cd);
+  Serial.print(" ");
   Serial.print(u);
   Serial.print(" ");
   Serial.println(virtual_angle);
