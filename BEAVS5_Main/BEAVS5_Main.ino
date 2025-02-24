@@ -55,9 +55,16 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 int servo_pin = 28;
 
 // PID constants
-float kp = 1;
-float ki = 1;
-float kd = 1;
+float kp = 0.2000e-04;
+float ki = 1.250e-09;
+float kd = 7.500e-05;
+
+float target_velocity = 0;
+float u = 0;
+
+float error1 = 0;
+float error2 = 0;
+float error3 = 0;
 
 // Flight Computer
 float altitude = launch_altitude; // [meters]
@@ -173,6 +180,8 @@ void coast_loop() {
 
   PID();
 
+  command_deflection(u);
+
   if (height > target_apogee) overshoot();
 
   // TODO the altitude reading is TOO NOISY for this cutoff: will have to add additional conditions
@@ -226,7 +235,7 @@ void launch() {
 void coast() {
   // ENGINE CUTOFF: Deploy BEAVS
   flight_phase = COAST;
-  command_deflection(0.8);
+  // command_deflection(1);
 }
 
 void overshoot() {
@@ -289,9 +298,16 @@ void calculate_telemetry() {
 
 // Tick PID controller
 void PID() {
-  double dt = (micros() - pid_clock_time) / (double) 1000000;
+  double dt = (micros() - pid_clock_time) / (double) 1000;
 
-  // target_velocity = 
+  target_velocity = velocity_lookup();
+
+  error3 = error2;
+  error2 = error1;
+  error1 = target_velocity - velocity;
+  // Serial.println(target_velocity);
+
+  u = u + ((kp + (ki * dt) + (kd / dt)) * error1) + abs((-kp - (2*kd / dt)) * error2) + ((kd / dt) * error3);
 
   pid_clock_time = micros();
 }
@@ -306,7 +322,7 @@ void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full ex
   float angle = 0;
 
   // Remap angle
-  if (deflection > -1) angle = deflection * (max - min) + min;
+  if (deflection >= 0) angle = deflection * (max - min) + min;
   commanded_angle = angle;
 
   int x = (max_pulse - min_pulse) * (angle / max) + min_pulse;
@@ -417,6 +433,12 @@ void get_trolled_idiot() {
   // Serial.print(" ");
   // Serial.print(Mach);
   // Serial.print(" ");
+  Serial.print(Cd_beavs);
+  Serial.print(" ");
+  Serial.print(Cd_rocket);
+  Serial.print(" ");
+  Serial.print(u);
+  Serial.print(" ");
   Serial.println(virtual_angle);
   // Serial.print(" ");
   // Serial.println(flight_phase);
