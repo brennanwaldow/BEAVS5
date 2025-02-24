@@ -178,9 +178,9 @@ void coast_loop() {
   collect_telemetry();
   calculate_telemetry();
 
-  PID();
+  // PID();
 
-  command_deflection(u);
+  // command_deflection(u);
 
   if (height > target_apogee) overshoot();
 
@@ -377,7 +377,8 @@ void get_trolled_idiot() {
   float mass = 22.863;
   if (launch_clock >= 0 && launch_clock < 4260) mass = (1.74432 * pow(10, -7) * pow(launch_clock, 2)) + (-0.00191159 * launch_clock) + 27.87811;
 
-  double dt = (micros() - clock_time) / (double) 1000000;
+  double curr_time = micros();
+  double dt = (curr_time - clock_time) / (double) 1000000;
 
   // Launch
   float thrust = 0;
@@ -451,9 +452,9 @@ void get_trolled_idiot() {
   // Serial.print(",");
   // Serial.println(height);
   
-  clock_time = micros();
+  clock_time = curr_time;
 
-  delay(75);
+  delay(15);
 }
 
 
