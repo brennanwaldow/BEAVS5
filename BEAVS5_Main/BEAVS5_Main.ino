@@ -77,8 +77,8 @@ long pid_clock_time = 0; // [ms]
 float max_height = 0; // [meters]
 long max_height_clock = 0; // [ms]
 
-float commanded_angle = 0; // [degrees; 0 to 180]
-float virtual_angle = 0; // [degrees; 0 to 180]
+float commanded_angle = 0; // [degrees; 0 to 270]
+float virtual_angle = 0; // [degrees; 0 to 270]
 
 /* Flight Phase
 -- 0: Preflight Safe
@@ -314,7 +314,7 @@ void PID() {
 
 void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full extend); or -1 for full retract (inside tube Inner Diameter)
   int min = 50;
-  int max = 180;
+  int max = 270;
 
   int max_pulse = 2500;
   int min_pulse = 500;
@@ -333,7 +333,8 @@ void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full ex
     delayMicroseconds(x);
     digitalWrite(servo_pin, LOW);
     delayMicroseconds(18550);
-    // Pulses duration: 500 - 0deg; 1500 - 90deg; 2500 - 180deg
+    // Pulses duration: 500 - 0deg; 1500 - 135deg; 2500 - 270deg
+    // TODO (i think. we must verify)
   }
 }
 
@@ -395,7 +396,7 @@ void get_trolled_idiot() {
 
   // TODO: is this right? it seems low for 6in diameter
   float A_ref = 0.019009;
-  float virtual_deflection = max((virtual_angle - 50) / (180 - 50), 0);
+  float virtual_deflection = max((virtual_angle - 50) / (270 - 50), 0);
   // TODO: Caliper time (measure the Metalbeav)
   float A_beavs = (((1.8 / 12) * (2.490 / 12)) * 2) * virtual_deflection;
   // TODO: Polyfit from Ansys Fluent god help us
