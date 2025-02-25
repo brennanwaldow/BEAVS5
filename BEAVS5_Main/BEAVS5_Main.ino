@@ -235,7 +235,7 @@ void launch() {
 void coast() {
   // ENGINE CUTOFF: Deploy BEAVS
   flight_phase = COAST;
-  // command_deflection(1);
+  command_deflection(1);
 }
 
 void overshoot() {
@@ -398,7 +398,7 @@ void get_trolled_idiot() {
   float A_ref = 0.019009;
   float virtual_deflection = max((virtual_angle - 50) / (270 - 50), 0);
   // TODO: Caliper time (measure the Metalbeav)
-  float A_beavs = (((1.8 / 12) * (2.490 / 12)) * 2) * virtual_deflection;
+  float A_beavs = ((feet_to_meters(1.8 / 12) * feet_to_meters(2.490 / 12)) * 2) * virtual_deflection;
   // TODO: Polyfit from Ansys Fluent god help us
   float Cd_beavs = 4.8 * (sqrt(A_beavs / A_ref));
   float Cd = Cd_rocket + (Cd_beavs * (A_beavs / A_ref));
