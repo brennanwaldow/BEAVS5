@@ -55,9 +55,14 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 int servo_pin = 28; // GPIO 28 / Physical Pin 34
 
 // PID constants
+// float kp = 0.2000e-04;
+// float ki = 1.250e-09;
+// float kd = 7.500e-05;
+
 float kp = 0.2000e-04;
 float ki = 1.250e-09;
 float kd = 7.500e-05;
+
 
 float target_velocity = 0;
 float u = 0;
@@ -178,9 +183,9 @@ void coast_loop() {
   collect_telemetry();
   calculate_telemetry();
 
-  // PID();
+  PID();
 
-  // command_deflection(u);
+  command_deflection(u);
 
   if (height > target_apogee) overshoot();
 
@@ -298,24 +303,24 @@ void calculate_telemetry() {
 
 // Tick PID controller
 void PID() {
-  double dt = (micros() - pid_clock_time) / (double) 1000;
+  double curr_time = micros();
+  double dt = (curr_time - pid_clock_time) / (double) 1000;
 
   target_velocity = velocity_lookup();
 
   error3 = error2;
   error2 = error1;
-  error1 = target_velocity - velocity;
-  // Serial.println(target_velocity);
+  error1 = velocity - target_velocity;
 
   u = u + ((kp + (ki * dt) + (kd / dt)) * error1) + abs((-kp - (2*kd / dt)) * error2) + ((kd / dt) * error3);
 
-  pid_clock_time = micros();
+  pid_clock_time = curr_time;
 }
 
 void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full extend); or -1 for full retract (inside tube Inner Diameter)
-  int min_def = 8.86;
-  int max_def = 150;
-  int max_deg = 270;
+  float min_def = 8.86;
+  float max_def = 150.0;
+  float max_deg = 270.0;
 
   int max_pulse = 2500;
   int min_pulse = 500;
@@ -324,11 +329,10 @@ void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full ex
 
   // Remap angle
   if (deflection >= 0) angle = deflection * (max_def - min_def) + min_def;
+  if (angle > max_def) angle = max_def;
   commanded_angle = angle;
 
   int x = (max_pulse - min_pulse) * (angle / max_deg) + min_pulse;
-
-  Serial.println(angle);
 
   for (int i = 0; i <= 2; i++) {
     // A pulse each 20ms
@@ -345,16 +349,17 @@ void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full ex
 
 // Velocity lookup table
 float velocity_lookup() {
-  // Shamelessly stolen polynomial constants from BEAVS4
+  // Shamelessly stolen polynomial shape from BEAVS4 with sketch ass constants
   // THESE ARE NOT FOR 2025 ROCKET DRAG
   // TODO UPDATE WHEN OPENROCKET FINALIZED
-  float a = -2.197790209276072e-9;
-  float b =  1.424454885385808e-6;
-  float c = -2.425899535946396e-4;
-  float d = -0.031992842779187;
-  float e = -0.261849939656465;
+  float p1 = -2.49143e-14;
+  float p2 = 2.1513e-10;
+  float p3 = -7.13147e-7;
+  float p4 = 0.00111909;
+  float p5 = -0.892654;
+  float p6 = 519.9997;
 
-  return (a * pow(height, 4)) + (b * pow(height, 3)) + (c * pow(height, 2)) + (d * height) + e;
+  return (p1 * pow(height, 5)) + (p2 * pow(height, 4)) + (p3 * pow(height, 3)) + (p4 * pow(height, 2)) + (p5 * height) + p6;
 }
 
 
@@ -447,6 +452,8 @@ void get_trolled_idiot() {
   Serial.print(" ");
   Serial.print(u);
   Serial.print(" ");
+  Serial.print(target_velocity);
+  Serial.print(" ");
   Serial.println(virtual_angle);
   // Serial.print(" ");
   // Serial.println(flight_phase);
@@ -461,6 +468,7 @@ void get_trolled_idiot() {
   
   clock_time = curr_time;
 
+  // TODO move this to main loop to merge sim/pid delay
   delay(15);
 }
 
