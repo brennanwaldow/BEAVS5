@@ -59,7 +59,7 @@ int servo_pin = 28; // GPIO 28 / Physical Pin 34
 // float ki = 1.250e-09;
 // float kd = 7.500e-05;
 
-float kp = 0.2000e-04;
+float kp = 0.8000e-04;
 float ki = 1.250e-09;
 float kd = 7.500e-05;
 
@@ -186,6 +186,7 @@ void coast_loop() {
   PID();
 
   command_deflection(u);
+  // command_deflection(1);
 
   if (height > target_apogee) overshoot();
 
@@ -352,12 +353,18 @@ float velocity_lookup() {
   // Shamelessly stolen polynomial shape from BEAVS4 with sketch ass constants
   // THESE ARE NOT FOR 2025 ROCKET DRAG
   // TODO UPDATE WHEN OPENROCKET FINALIZED
-  float p1 = -2.49143e-14;
-  float p2 = 2.1513e-10;
-  float p3 = -7.13147e-7;
-  float p4 = 0.00111909;
-  float p5 = -0.892654;
-  float p6 = 519.9997;
+  // float p1 = -2.49143e-14;
+  // float p2 = 2.1513e-10;
+  // float p3 = -7.13147e-7;
+  // float p4 = 0.00111909;
+  // float p5 = -0.892654;
+  // float p6 = 519.9997;
+  float p1 = -3.8636e-14;
+  float p2 = 3.3601e-10;
+  float p3 = -0.00000112062;
+  float p4 = 0.00177172;
+  float p5 = -1.38546;
+  float p6 = 659.02601;
 
   return (p1 * pow(height, 5)) + (p2 * pow(height, 4)) + (p3 * pow(height, 3)) + (p4 * pow(height, 2)) + (p5 * height) + p6;
 }
@@ -406,7 +413,7 @@ void get_trolled_idiot() {
 
   // TODO: is this right? it seems low for 6in diameter
   float A_ref = 0.019009;
-  float virtual_deflection = max((virtual_angle - 50) / (270 - 50), 0);
+  float virtual_deflection = max((virtual_angle - 8.86) / (150 - 8.86), 0);
   float A_beavs = ((feet_to_meters(1.632 / 12) * feet_to_meters(2.490 / 12)) * 2) * virtual_deflection;
   // TODO: Polyfit from Ansys Fluent god help us
   float Cd_beavs = 4.8 * (sqrt(A_beavs / A_ref));
