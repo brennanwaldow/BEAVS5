@@ -52,7 +52,7 @@ Adafruit_BMP3XX bmp;
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 
 // Servo
-int servo_pin = 28;
+int servo_pin = 28; // GPIO 28 / Physical Pin 34
 
 // PID constants
 float kp = 0.2000e-04;
@@ -313,8 +313,9 @@ void PID() {
 }
 
 void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full extend); or -1 for full retract (inside tube Inner Diameter)
-  int min = 50;
-  int max = 270;
+  int min_def = 8.86;
+  int max_def = 150;
+  int max_deg = 270;
 
   int max_pulse = 2500;
   int min_pulse = 500;
@@ -322,17 +323,21 @@ void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full ex
   float angle = 0;
 
   // Remap angle
-  if (deflection >= 0) angle = deflection * (max - min) + min;
+  if (deflection >= 0) angle = deflection * (max_def - min_def) + min_def;
   commanded_angle = angle;
 
-  int x = (max_pulse - min_pulse) * (angle / max) + min_pulse;
+  int x = (max_pulse - min_pulse) * (angle / max_deg) + min_pulse;
+
+  Serial.println(angle);
 
   for (int i = 0; i <= 2; i++) {
     // A pulse each 20ms
+
     digitalWrite(servo_pin, HIGH);
     delayMicroseconds(x);
     digitalWrite(servo_pin, LOW);
     delayMicroseconds(18550);
+
     // Pulses duration: 500 - 0deg; 1500 - 135deg; 2500 - 270deg
     // TODO (i think. we must verify)
   }
@@ -397,8 +402,7 @@ void get_trolled_idiot() {
   // TODO: is this right? it seems low for 6in diameter
   float A_ref = 0.019009;
   float virtual_deflection = max((virtual_angle - 50) / (270 - 50), 0);
-  // TODO: Caliper time (measure the Metalbeav)
-  float A_beavs = ((feet_to_meters(1.8 / 12) * feet_to_meters(2.490 / 12)) * 2) * virtual_deflection;
+  float A_beavs = ((feet_to_meters(1.632 / 12) * feet_to_meters(2.490 / 12)) * 2) * virtual_deflection;
   // TODO: Polyfit from Ansys Fluent god help us
   float Cd_beavs = 4.8 * (sqrt(A_beavs / A_ref));
   float Cd = Cd_rocket + (Cd_beavs * (A_beavs / A_ref));
@@ -416,8 +420,8 @@ void get_trolled_idiot() {
   
   // Smoothly adjust physical blade angle based on servo speed
   // TODO: Slowmo stopwatch for precise time after integrating on Metalbeav for speed under torque loading
-  if (commanded_angle > virtual_angle) virtual_angle = virtual_angle + min(commanded_angle - virtual_angle, (180.0 / 1.0) * dt);
-  else if (commanded_angle < virtual_angle) virtual_angle = virtual_angle + max(commanded_angle - virtual_angle, -(180.0 / 1.0) * dt);
+  if (commanded_angle > virtual_angle) virtual_angle = virtual_angle + min(commanded_angle - virtual_angle, (150.0 / 1.41) * dt);
+  else if (commanded_angle < virtual_angle) virtual_angle = virtual_angle + max(commanded_angle - virtual_angle, -(150.0 / 1.41) * dt);
 
   Serial.print((float) launch_clock / 1000.0);
   Serial.print(" ");
