@@ -59,9 +59,14 @@ int servo_pin = 28; // GPIO 28 / Physical Pin 34
 // float ki = 1.250e-09;
 // float kd = 7.500e-05;
 
-float kp = 0.8000e-04;
-float ki = 1.250e-09;
-float kd = 7.500e-05;
+// float kp = 0.8000e-04;
+// float ki = 1.250e-09;
+// float kd = 7.500e-05;
+
+double kp = 8.000e-09;
+double ki = 2.500e-06;
+double kd = 0;
+// TODO: perfect performance at Kd = 0?? investigate further, especially for noise damping
 
 
 float target_velocity = 0;
@@ -77,6 +82,7 @@ float height = 0; // [meters]
 double velocity = 0; // [m/s]
 double acceleration = 0; // [m/s^2]
 long clock_time = 0; // [ms]
+long curr_time = 0; // [micro s]
 long pid_clock_time = 0; // [ms]
 
 float max_height = 0; // [meters]
@@ -125,6 +131,8 @@ void setup() {
 
 // -----   Control Loop   -----
 void loop() {
+  curr_time = micros();
+
   switch(flight_phase) {
     case PREFLIGHT:
       preflight_loop();
@@ -145,6 +153,10 @@ void loop() {
       descend_loop();
       break;
   }
+  
+  clock_time = curr_time;
+
+  delay(15);
 }
 
 
@@ -304,8 +316,8 @@ void calculate_telemetry() {
 
 // Tick PID controller
 void PID() {
-  double curr_time = micros();
-  double dt = (curr_time - pid_clock_time) / (double) 1000;
+  // long curr_time = micros();
+  double dt = (curr_time - clock_time) / (double) 1000;
 
   target_velocity = velocity_lookup();
 
@@ -313,9 +325,20 @@ void PID() {
   error2 = error1;
   error1 = velocity - target_velocity;
 
-  u = u + ((kp + (ki * dt) + (kd / dt)) * error1) + abs((-kp - (2*kd / dt)) * error2) + ((kd / dt) * error3);
+  u = u + (double) (((kp + (ki * dt) + (kd / dt)) * error1) + abs((-kp - (2*kd / dt)) * error2) + ((kd / dt) * error3));
+  if (u > 1) u = 1;
+  if (u < 0) u = 0;
+  // Serial.print(dt);
+  // Serial.print(" ");
+  // Serial.print(error1);
+  // Serial.print(" ");
+  // Serial.print(error2);
+  // Serial.print(" ");
+  // Serial.print(error3);
+  // Serial.print(" ");
+  // Serial.println(((kp + (ki * dt) + (kd / dt)) * error1) + abs((-kp - (2*kd / dt)) * error2) + ((kd / dt) * error3), 5);
 
-  pid_clock_time = curr_time;
+  // pid_clock_time = curr_time;
 }
 
 void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full extend); or -1 for full retract (inside tube Inner Diameter)
@@ -395,7 +418,7 @@ void get_trolled_idiot() {
   float mass = 22.863;
   if (launch_clock >= 0 && launch_clock < 4260) mass = (1.74432 * pow(10, -7) * pow(launch_clock, 2)) + (-0.00191159 * launch_clock) + 27.87811;
 
-  double curr_time = micros();
+  // double curr_time = micros();
   double dt = (curr_time - clock_time) / (double) 1000000;
 
   // Launch
@@ -429,9 +452,17 @@ void get_trolled_idiot() {
   double dh = velocity * dt;
   altitude = altitude + dh;
   if (altitude < launch_altitude) altitude = launch_altitude;
+
+  // Fix flight conditions to post-launch without simulating burn:
+  // if (launch_clock < (4.16 - 0.05) * 1000) {
+  //   altitude = 846.352;
+  //   acceleration = 0;
+  //   velocity = 339.186;
+  // } else {
+  //   flight_phase = COAST;
+  // }
   
-  // Smoothly adjust physical blade angle based on servo speed
-  // TODO: Slowmo stopwatch for precise time after integrating on Metalbeav for speed under torque loading
+  // Smoothly adjust physical blade angle based on measured servo speed
   if (commanded_angle > virtual_angle) virtual_angle = virtual_angle + min(commanded_angle - virtual_angle, (150.0 / 1.41) * dt);
   else if (commanded_angle < virtual_angle) virtual_angle = virtual_angle + max(commanded_angle - virtual_angle, -(150.0 / 1.41) * dt);
 
@@ -457,7 +488,7 @@ void get_trolled_idiot() {
   Serial.print(" ");
   Serial.print(Cd);
   Serial.print(" ");
-  Serial.print(u);
+  Serial.print(u, 5);
   Serial.print(" ");
   Serial.print(target_velocity);
   Serial.print(" ");
@@ -472,11 +503,6 @@ void get_trolled_idiot() {
   // Serial.print(velocity);
   // Serial.print(",");
   // Serial.println(height);
-  
-  clock_time = curr_time;
-
-  // TODO move this to main loop to merge sim/pid delay
-  delay(15);
 }
 
 
