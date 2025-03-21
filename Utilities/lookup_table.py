@@ -40,7 +40,7 @@ apogee = table[0][-1]
 print(f'Adjusted apogee: {round(apogee, 2)} m')
 
 # Polyfit
-constants = np.polyfit(table[0], table[1], 10)
+constants = np.polyfit(table[0], table[1], 15)
 p = np.poly1d(constants)
 
 # Output
