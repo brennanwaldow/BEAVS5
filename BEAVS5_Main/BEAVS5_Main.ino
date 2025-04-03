@@ -373,23 +373,38 @@ void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full ex
 
 // Velocity lookup table
 float velocity_lookup() {
-  // Shamelessly stolen polynomial shape from BEAVS4 with sketch ass constants
-  // THESE ARE NOT FOR 2025 ROCKET DRAG
-  // TODO UPDATE WHEN OPENROCKET FINALIZED
-  // float p1 = -2.49143e-14;
-  // float p2 = 2.1513e-10;
-  // float p3 = -7.13147e-7;
-  // float p4 = 0.00111909;
-  // float p5 = -0.892654;
-  // float p6 = 519.9997;
-  float p1 = -3.8636e-14;
-  float p2 = 3.3601e-10;
-  float p3 = -0.00000112062;
-  float p4 = 0.00177172;
-  float p5 = -1.38546;
-  float p6 = 659.02601;
+  // These constants are obtained from ../Simulation/lookup_table.py using the OpenRocket simulation
+  double consts[] = {
+    -1.97968329189789e-43,
+    4.752793902659054e-39,
+    -5.021845918026457e-35,
+    3.0040180625396656e-31,
+    -1.0557454943452812e-27,
+    1.7176847161272918e-24,
+    2.629175167886028e-21,
+    -2.429214233273044e-17,
+    7.548454166456636e-14,
+    -1.468172319277919e-10,
+    1.9752220286824027e-07,
+    -0.00018773406093033337,
+    0.12431823221950207,
+    -54.710515563673326,
+    14398.409844721882,
+    -1715011.8987151487
+  };
 
-  return (p1 * pow(height, 5)) + (p2 * pow(height, 4)) + (p3 * pow(height, 3)) + (p4 * pow(height, 2)) + (p5 * height) + p6;
+  int poly_order = 15;
+  double result = 0;
+
+  // pain
+  for (int i = 0; i < poly_order + 1; i++) {
+    result = result + ((double) pow(height, poly_order - i) * consts[i]);
+  }
+
+  // Range of polynomial validity: Burnout to apogee
+  if (height < 841.511) return 296.503788;
+  if (height > target_apogee) return 0;
+  return (float) result;
 }
 
 

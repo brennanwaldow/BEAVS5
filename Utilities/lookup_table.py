@@ -51,15 +51,32 @@ for const in constants:
     print(f'P{i}: {const}')
     i += 1
 
-print('')
-print(f'Polynomial deviation at apogee: {round(p(table[0][-1]), 3)} m/s\n')
+# Print for easy copy-paste into Arduino IDE
+print('\nArray output:\n')
 
+i = 1
+for const in constants:
+    print(f'  {const},')
+    i += 1
 
+print(f'\nPolynomial lower bound: {table[0][0]}, at {p(table[0][0])} m/s')
+print(f'Polynomial upper bound: {table[0][-1]}, at {p(table[0][-1])} m/s (just snap to 0 m/s?)')
+
+print(f'\nPolynomial deviation at apogee: {round(p(table[0][-1]), 3)} m/s\n')
+                      
 # Graph velocity table
 fig, axes = plt.subplots(1, 1)
 
 axes.plot(table[0], table[1], label='OpenRocket simulation')
 axes.plot(table[0], p(table[0]), label='Polynomial fit')
+
+# Compare against 2024 polyfit
+def f(x):
+    return (-3.8636e-14 * x**5) + (3.3601e-10 * x**4) + (-0.00000112062 * x**3) + (0.00177172 * x**2) + (-1.38546 * x) + 659.02601
+vel = []
+for alt in table[0]:
+    vel.append(f(alt))
+axes.plot(table[0], vel, label='Old polyfit')
 
 axes.set_xlabel('Altitude (m)')
 axes.set_ylabel('Velocity (m/s)')
