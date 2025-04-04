@@ -63,10 +63,14 @@ int servo_pin = 28; // GPIO 28 / Physical Pin 34
 // float ki = 1.250e-09;
 // float kd = 7.500e-05;
 
-double kp = 8.000e-09;
-double ki = 2.500e-06;
-double kd = 0;
+// double kp = 8.000e-09;
+// double ki = 2.500e-06;
+// double kd = 0;
 // TODO: perfect performance at Kd = 0?? investigate further, especially for noise damping
+
+double kp = 5.600e-05;
+double ki = 2.500e-06;
+double kd = 4.688e-05;
 
 
 float target_velocity = 0;
@@ -442,6 +446,9 @@ void get_trolled_idiot() {
   if (launch_clock > 0 && launch_clock <= 1590) thrust = (0.662162 * launch_clock) + 2458.16216;
   else if (launch_clock > 1590 && launch_clock <= 3240) thrust = (-0.000111179 * pow(launch_clock, 2)) + (0.171212 * launch_clock) + 3507.36323;
   else if (launch_clock > 3240 && launch_clock <= 4190) thrust = (-3.04632 * launch_clock) + 12764.0632;
+
+  // Modulate thrust to simulate performance deviation in reality
+  thrust = thrust * 1;
   
   if (launch_clock > 0) acceleration = -(gravity(altitude)) + (thrust / mass);
 
