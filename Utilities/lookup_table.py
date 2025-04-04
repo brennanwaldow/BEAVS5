@@ -2,7 +2,7 @@ import csv
 from matplotlib import pyplot as plt
 import numpy as np
 
-dataset = '5.3.2_Modified'
+dataset = '5.3.2_Coast10000'
 target_apogee = 3048 # [m]
 
 # Altitude [m], velocity [m/s]

@@ -79,6 +79,18 @@ for const in constants:
 def old_drag_curve(m):
     return (0.0936073 * (m**3)) + (-0.0399526 * (m**2)) + (0.0455436 * m) + 0.582895;
 
+# Print for easy copy-paste into Arduino IDE
+print('\nArray output:\n')
+
+i = 1
+for const in constants:
+    print(f'  {const},')
+    i += 1
+
+print(f'\nPolynomial upper bound: M {drag_table[0][0]}, at Cd = {p(drag_table[0][0])}')
+print(f'Polynomial lower bound: M {drag_table[0][-1]}, at Cd = {p(drag_table[0][-1])}')
+
+
 # Graph velocity table
 fig, axes = plt.subplots(1, 1)
 

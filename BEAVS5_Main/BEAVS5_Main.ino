@@ -377,7 +377,7 @@ void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full ex
 
 // Velocity lookup table
 float velocity_lookup() {
-  // These constants are obtained from ../Simulation/lookup_table.py using the OpenRocket simulation
+  // These constants are obtained from ../Utilities/lookup_table.py using the OpenRocket simulation
   double consts[] = {
     -1.97968329189789e-43,
     4.752793902659054e-39,
@@ -431,7 +431,7 @@ void get_trolled_idiot() {
 
   float speed_of_sound = (-0.0039042 * altitude) + 340.3;
   float Mach = abs(velocity) / speed_of_sound;
-  float Cd_rocket = (0.0936073 * (Mach * Mach * Mach)) + (-0.0399526 * (Mach * Mach)) + (0.0455436 * Mach) + 0.582895;
+  float Cd_rocket = get_Cd(Mach);
   float air_density = (-6.85185 * (pow(10, -14)) * pow(altitude, 3)) + (4.30675 * (pow(10, -9)) * pow(altitude, 2)) + (-0.0001176 * altitude) + 1.22499;
 
   float mass = 22.863;
@@ -532,6 +532,46 @@ void get_trolled_idiot() {
 
 float gravity(float altitude) {          // altitude [meters]
   return (-0.00000325714 * altitude) + 9.80714; // acceleration magnitude [m/s^2]
+}
+
+float get_Cd(float mach) {
+// These constants are obtained from ../Utilities/drag_curve.py using the OpenRocket simulation
+  double consts[] = {
+  1936133.3994550942,
+  -17892744.821186386,
+  71088901.67001748,
+  -152917036.2013894,
+  172230192.11528763,
+  -35504094.91587761,
+  -174192967.30414632,
+  222210183.0763532,
+  -11280092.992398508,
+  -277195468.76332796,
+  407642277.2545101,
+  -339272207.4266255,
+  193211104.45181522,
+  -79602959.85001652,
+  24146269.453084067,
+  -5385658.5338379815,
+  869534.4465245228,
+  -98413.60272751944,
+  7368.323058299829,
+  -326.12013526082325,
+  7.014430346070829
+  };
+
+  int poly_order = 20;
+  double result = 0;
+
+  // pain
+  for (int i = 0; i < poly_order + 1; i++) {
+    result = result + ((double) pow(mach, poly_order - i) * consts[i]);
+  }
+
+  // Range of polynomial validity
+  if (mach < 0.102) return 0.5854;
+  if (mach > 1.196) return 0.643958;
+  return (float) result;
 }
 
 
