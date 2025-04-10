@@ -84,7 +84,7 @@ print('\nArray output:\n')
 
 i = 1
 for const in constants:
-    print(f'  {const},')
+    print(f'    {const},')
     i += 1
 
 print(f'\nPolynomial upper bound: M {drag_table[0][0]}, at Cd = {p(drag_table[0][0])}')

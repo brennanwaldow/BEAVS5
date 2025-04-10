@@ -441,11 +441,11 @@ void get_trolled_idiot() {
   double dt = (curr_time - clock_time) / (double) 1000000;
 
   // Launch
-  float thrust = 0;
+  float thrust = get_thrust(launch_clock);
 
-  if (launch_clock > 0 && launch_clock <= 1590) thrust = (0.662162 * launch_clock) + 2458.16216;
-  else if (launch_clock > 1590 && launch_clock <= 3240) thrust = (-0.000111179 * pow(launch_clock, 2)) + (0.171212 * launch_clock) + 3507.36323;
-  else if (launch_clock > 3240 && launch_clock <= 4190) thrust = (-3.04632 * launch_clock) + 12764.0632;
+  // if (launch_clock > 0 && launch_clock <= 1590) thrust = (0.662162 * launch_clock) + 2458.16216;
+  // else if (launch_clock > 1590 && launch_clock <= 3240) thrust = (-0.000111179 * pow(launch_clock, 2)) + (0.171212 * launch_clock) + 3507.36323;
+  // else if (launch_clock > 3240 && launch_clock <= 4190) thrust = (-3.04632 * launch_clock) + 12764.0632;
 
   // Modulate thrust to simulate performance deviation in reality
   thrust = thrust * 1;
@@ -500,8 +500,8 @@ void get_trolled_idiot() {
   Serial.print(" ");
   // Serial.print(Fd);
   // Serial.print(" ");
-  // Serial.print(thrust);
-  // Serial.print(" ");
+  Serial.print(thrust);
+  Serial.print(" ");
   // Serial.print(Mach);
   // Serial.print(" ");
   Serial.print(Cd_beavs);
@@ -535,29 +535,33 @@ float gravity(float altitude) {          // altitude [meters]
 }
 
 float get_Cd(float mach) {
-// These constants are obtained from ../Utilities/drag_curve.py using the OpenRocket simulation
+  // Range of polynomial validity
+  if (mach < 0.102) return 0.5854;
+  if (mach > 1.196) return 0.643958;
+  
+  // These constants are obtained from ../Utilities/drag_curve.py using the OpenRocket simulation
   double consts[] = {
-  1936133.3994550942,
-  -17892744.821186386,
-  71088901.67001748,
-  -152917036.2013894,
-  172230192.11528763,
-  -35504094.91587761,
-  -174192967.30414632,
-  222210183.0763532,
-  -11280092.992398508,
-  -277195468.76332796,
-  407642277.2545101,
-  -339272207.4266255,
-  193211104.45181522,
-  -79602959.85001652,
-  24146269.453084067,
-  -5385658.5338379815,
-  869534.4465245228,
-  -98413.60272751944,
-  7368.323058299829,
-  -326.12013526082325,
-  7.014430346070829
+    1936133.3994550942,
+    -17892744.821186386,
+    71088901.67001748,
+    -152917036.2013894,
+    172230192.11528763,
+    -35504094.91587761,
+    -174192967.30414632,
+    222210183.0763532,
+    -11280092.992398508,
+    -277195468.76332796,
+    407642277.2545101,
+    -339272207.4266255,
+    193211104.45181522,
+    -79602959.85001652,
+    24146269.453084067,
+    -5385658.5338379815,
+    869534.4465245228,
+    -98413.60272751944,
+    7368.323058299829,
+    -326.12013526082325,
+    7.014430346070829
   };
 
   int poly_order = 20;
@@ -568,9 +572,47 @@ float get_Cd(float mach) {
     result = result + ((double) pow(mach, poly_order - i) * consts[i]);
   }
 
+  return (float) result;
+}
+
+float get_thrust(float time) { // [ms]
   // Range of polynomial validity
-  if (mach < 0.102) return 0.5854;
-  if (mach > 1.196) return 0.643958;
+  if (time < 0) return 0;
+  if (time > 4188) return 0;
+
+  // These constants are obtained from ../Utilities/thrust_extractor.py using the OpenRocket simulation
+  double consts[] = {
+    1.4788401950481751e-60,
+    -5.430596612041015e-56,
+    8.886785448930557e-52,
+    -8.403664526635023e-48,
+    4.880248073231894e-44,
+    -1.5684417727986281e-40,
+    2.127850290614022e-38,
+    2.6254116851458864e-33,
+    -1.5419314149617205e-29,
+    5.285963613417249e-26,
+    -1.2638702503695773e-22,
+    2.2174213731433413e-19,
+    -2.899620650529627e-16,
+    2.823612201552925e-13,
+    -2.022677406801039e-10,
+    1.0417055113804496e-07,
+    -3.72206730108048e-05,
+    0.00874506638494612,
+    -1.242852018405207,
+    93.26899190217185,
+    -168.71393439284608
+  };
+
+  int poly_order = 20;
+  double result = 0;
+
+  // pain
+  for (int i = 0; i < poly_order + 1; i++) {
+    result = result + ((double) pow(time, poly_order - i) * consts[i]);
+  }
+
   return (float) result;
 }
 
