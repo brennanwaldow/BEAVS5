@@ -434,8 +434,7 @@ void get_trolled_idiot() {
   float Cd_rocket = get_Cd(Mach);
   float air_density = (-6.85185 * (pow(10, -14)) * pow(altitude, 3)) + (4.30675 * (pow(10, -9)) * pow(altitude, 2)) + (-0.0001176 * altitude) + 1.22499;
 
-  float mass = 22.863;
-  if (launch_clock >= 0 && launch_clock < 4260) mass = (1.74432 * pow(10, -7) * pow(launch_clock, 2)) + (-0.00191159 * launch_clock) + 27.87811;
+  float mass = get_mass(launch_clock);
 
   // double curr_time = micros();
   double dt = (curr_time - clock_time) / (double) 1000000;
@@ -498,8 +497,12 @@ void get_trolled_idiot() {
 
   Serial.print(height);
   Serial.print(" ");
-  // Serial.print(Fd);
-  // Serial.print(" ");
+  Serial.print(Fd);
+  Serial.print(" ");
+  Serial.print(get_Fd_BEAVS(velocity, Cd_beavs, A_beavs, air_density));
+  Serial.print(" ");
+  Serial.print(mass * 9.81);
+  Serial.print(" ");
   Serial.print(thrust);
   Serial.print(" ");
   // Serial.print(Mach);
@@ -614,6 +617,46 @@ float get_thrust(float time) { // [ms]
   }
 
   return (float) result;
+}
+
+float get_mass(float time) { // [ms]
+  // Range of polynomial validity
+  if (time < 0) return 27.64;
+  if (time > 10000) return 22.86;
+
+  // These constants are obtained from ../Utilities/mass_extractor.py using the OpenRocket simulation
+  double consts[] = {
+    8.668381669216739e-60,
+    -1.5955042856385969e-54,
+    1.3128951896033921e-49,
+    -6.361429030677903e-45,
+    2.0103053474988076e-40,
+    -4.3290154623097466e-36,
+    6.425240565797594e-32,
+    -6.45375900533127e-28,
+    4.097728297876439e-24,
+    -1.2906046395728657e-20,
+    -1.275797911407393e-17,
+    2.5778237964289546e-13,
+    -7.679104125706069e-10,
+    7.566678857489254e-07,
+    -0.001416982837409509,
+    27.69946400632899
+  };
+
+  int poly_order = 15;
+  double result = 0;
+
+  // pain
+  for (int i = 0; i < poly_order + 1; i++) {
+    result = result + ((double) pow(time, poly_order - i) * consts[i]);
+  }
+
+  return (float) result;
+}
+
+float get_Fd_BEAVS(float velocity, float Cd_BEAVS, float A_BEAVS, float air_density) {
+  return 0.5 * air_density * (velocity * velocity) * Cd_BEAVS * A_BEAVS;
 }
 
 
