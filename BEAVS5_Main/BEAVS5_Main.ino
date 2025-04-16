@@ -520,8 +520,8 @@ void get_trolled_idiot() {
   Serial.print(" ");
   Serial.print(thrust);
   Serial.print(" ");
-  // Serial.print(Mach);
-  // Serial.print(" ");
+  Serial.print(Mach);
+  Serial.print(" ");
   Serial.print(Cd_beavs);
   Serial.print(" ");
   Serial.print(Cd_rocket);
@@ -553,14 +553,50 @@ float gravity(float altitude) {          // altitude [meters]
 }
 
 float get_Cd(float mach) {
-  // Range of polynomial validity
-  if (mach < 0.102) return 0.5854;
-  if (mach > 1.196) return 0.643958;
-
   double result = 0;
 
+  if (mach < 0.102) {
+    // Plateau drag curve at low speed on launch
+    if (height < 150) return 0.58486;
+
+    // Apogee regime:
+
+    // Lower bound
+    if (mach < 0.019) return 0.68759;
+
+    // These constants are obtained from ../Utilities/drag_curve.py using the OpenRocket simulation
+    double consts[] = {
+      3.943998910536891e+21,    // P1
+      -3.474565463793999e+21,    // P2
+      1.4043677485773582e+21,    // P3
+      -3.451650801998561e+20,    // P4
+      5.764199260473382e+19,    // P5
+      -6.922175385568618e+18,    // P6
+      6.170037697792379e+17,    // P7
+      -4.153146736340778e+16,    // P8
+      2126750824405024.0,    // P9
+      -82788507607171.47,    // P10
+      2428099426082.4634,    // P11
+      -52657007161.88133,    // P12
+      816908342.3766693,    // P13
+      -8554948.870212069,    // P14
+      54053.58148892024,    // P15
+      -154.56717901831954,    // P16
+    };
+
+    int poly_order = 15;
+
+    // pain
+    for (int i = 0; i < poly_order + 1; i++) {
+      result = result + ((double) pow(mach, poly_order - i) * consts[i]);
+    }
+  }
+
+  // Polynomial upper bounds
+  if (mach > 1.196) return 0.643958;
+
   // Subsonic regime:
-  if (mach < 1) {
+  if (mach > 0.1 && mach < 1) {
     // These constants are obtained from ../Utilities/drag_curve.py using the OpenRocket simulation
     double consts[] = {
       -155187.47240576352,  // P1
