@@ -43,6 +43,11 @@ float launch_altitude = SEA_LEVEL; // [meters]
 float launch_altimeter = inhg_to_hpa(30.49); // [HPa]
 float target_apogee = feet_to_meters(10000.0); // [meters], AGL
 
+// Simulation only
+float launch_angle = 5; // [degrees], from vertical
+float perpendicular_acceleration = 0; // [m/s^2]
+float perpendicular_velocity = 0; // [m/s]
+
 // BMP390
 #define WIRE Wire
 #define SEALEVELPRESSURE_HPA (launch_altimeter)
@@ -73,12 +78,12 @@ double ki = 2.500e-06;
 double kd = 4.688e-05;
 
 
-float target_velocity = 0;
-float u = 0;
+float target_velocity = 0; // [m/s]
+float u = 0; // [ratio], 0 to 1
 
-float error1 = 0;
-float error2 = 0;
-float error3 = 0;
+float error1 = 0; // [m/s]
+float error2 = 0; // [m/s]
+float error3 = 0; // [m/s]
 
 // Flight Computer
 float altitude = launch_altitude; // [meters]
@@ -343,6 +348,8 @@ void PID() {
   // Serial.println(((kp + (ki * dt) + (kd / dt)) * error1) + abs((-kp - (2*kd / dt)) * error2) + ((kd / dt) * error3), 5);
 
   // pid_clock_time = curr_time;
+
+  u = 0;
 }
 
 void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full extend); or -1 for full retract (inside tube Inner Diameter)
@@ -449,14 +456,17 @@ void get_trolled_idiot() {
   // Modulate thrust to simulate performance deviation in reality
   thrust = thrust * 1;
   
-  if (launch_clock > 0) acceleration = -(gravity(altitude)) + (thrust / mass);
+  if (launch_clock > 0) {
+    acceleration = -(gravity(altitude) * cos(degrees_to_radians(launch_angle))) + (thrust / mass);
+    perpendicular_acceleration = (gravity(altitude) * sin(degrees_to_radians(launch_angle)));
+  }
 
   // Drag
   int dir = 1;
   if (velocity < 0) dir = -1;
 
-  // TODO: is this right? it seems low for 6in diameter
-  float A_ref = 0.019009;
+  // TODO: Update for new Outer Diameter when openrocket finalized
+  float A_ref = 0.019113;
   float virtual_deflection = max((virtual_angle - 8.86) / (150 - 8.86), 0);
   float A_beavs = ((feet_to_meters(1.632 / 12) * feet_to_meters(2.490 / 12)) * 2) * virtual_deflection;
   // TODO: Polyfit from Ansys Fluent god help us
@@ -467,10 +477,15 @@ void get_trolled_idiot() {
   acceleration = acceleration - (Fd / mass);
 
   double dv = acceleration * dt;
+  double dv_perpendicular = perpendicular_acceleration * dt;
 
-  if (launch_clock > 0) velocity = velocity + dv;
+  if (launch_clock > 0) {
+    velocity = velocity + dv;
+    perpendicular_velocity = perpendicular_velocity + dv_perpendicular;
+  }
 
-  double dh = velocity * dt;
+  // From rotated coordinate system to vertical coordinate system
+  double dh = ((velocity * dt) * cos(degrees_to_radians(launch_angle))); // - (perpendicular_velocity * sin(degrees_to_radians(launch_angle)));
   altitude = altitude + dh;
   if (altitude < launch_altitude) altitude = launch_altitude;
 
@@ -537,6 +552,7 @@ float gravity(float altitude) {          // altitude [meters]
   return (-0.00000325714 * altitude) + 9.80714; // acceleration magnitude [m/s^2]
 }
 
+// TODO: Piecewise this bastard to increase reliability (currently overestimates transonic drag because the shape just too silly)
 float get_Cd(float mach) {
   // Range of polynomial validity
   if (mach < 0.102) return 0.5854;
@@ -657,6 +673,10 @@ float get_mass(float time) { // [ms]
 
 float get_Fd_BEAVS(float velocity, float Cd_BEAVS, float A_BEAVS, float air_density) {
   return 0.5 * air_density * (velocity * velocity) * Cd_BEAVS * A_BEAVS;
+}
+
+float degrees_to_radians(float degrees) {
+  return (degrees * 3.1415926535897932384626433832795) / 180;
 }
 
 
