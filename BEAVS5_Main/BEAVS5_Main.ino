@@ -44,7 +44,7 @@ float launch_altimeter = inhg_to_hpa(30.49); // [HPa]
 float target_apogee = feet_to_meters(10000.0); // [meters], AGL
 
 // Simulation only
-float launch_angle = 5; // [degrees], from vertical
+float launch_angle = 0; // [degrees], from vertical
 float perpendicular_acceleration = 0; // [m/s^2]
 float perpendicular_velocity = 0; // [m/s]
 
@@ -86,19 +86,19 @@ float error2 = 0; // [m/s]
 float error3 = 0; // [m/s]
 
 // Flight Computer
-float altitude = launch_altitude; // [meters]
-float height = 0; // [meters]
-double velocity = 0; // [m/s]
-double acceleration = 0; // [m/s^2]
-long clock_time = 0; // [ms]
-long curr_time = 0; // [micro s]
-long pid_clock_time = 0; // [ms]
+float altitude = launch_altitude;  // [meters]
+float height = 0;                  // [meters]
+double velocity = 0;               // [m/s]
+double acceleration = 0;           // [m/s^2]
+long clock_time = 0;               // [ms]
+long curr_time = 0;                // [micro s]
+long pid_clock_time = 0;           // [ms]
 
-float max_height = 0; // [meters]
-long max_height_clock = 0; // [ms]
+float max_height = 0;              // [meters]
+long max_height_clock = 0;         // [ms]
 
-float commanded_angle = 0; // [degrees; 0 to 270]
-float virtual_angle = 0; // [degrees; 0 to 270]
+float commanded_angle = 0;         // [degrees; 0 to 270]
+float virtual_angle = 0;           // [degrees; 0 to 270]
 
 /* Flight Phase
 -- 0: Preflight Safe
@@ -162,7 +162,7 @@ void loop() {
       descend_loop();
       break;
   }
-  
+
   clock_time = curr_time;
 
   delay(15);
@@ -294,7 +294,7 @@ void collect_telemetry() {
     double dt = (micros() - clock_time) / (double) 1000000;
     velocity = (altitude - prev_altitude) / dt;
     clock_time = micros();
-    
+
     // BNO055
     sensors_event_t accelerometer;
     bno.getEvent(&accelerometer, Adafruit_BNO055::VECTOR_ACCELEROMETER);
@@ -349,7 +349,7 @@ void PID() {
 
   // pid_clock_time = curr_time;
 
-  u = 0;
+  // u = 0;
 }
 
 void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full extend); or -1 for full retract (inside tube Inner Diameter)
@@ -359,7 +359,7 @@ void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full ex
 
   int max_pulse = 2500;
   int min_pulse = 500;
-  
+
   float angle = 0;
 
   // Remap angle
@@ -455,7 +455,7 @@ void get_trolled_idiot() {
 
   // Modulate thrust to simulate performance deviation in reality
   thrust = thrust * 1;
-  
+
   if (launch_clock > 0) {
     acceleration = -(gravity(altitude) * cos(degrees_to_radians(launch_angle))) + (thrust / mass);
     perpendicular_acceleration = (gravity(altitude) * sin(degrees_to_radians(launch_angle)));
@@ -497,7 +497,7 @@ void get_trolled_idiot() {
   // } else {
   //   flight_phase = COAST;
   // }
-  
+
   // Smoothly adjust physical blade angle based on measured servo speed
   if (commanded_angle > virtual_angle) virtual_angle = virtual_angle + min(commanded_angle - virtual_angle, (150.0 / 1.41) * dt);
   else if (commanded_angle < virtual_angle) virtual_angle = virtual_angle + max(commanded_angle - virtual_angle, -(150.0 / 1.41) * dt);
@@ -552,43 +552,65 @@ float gravity(float altitude) {          // altitude [meters]
   return (-0.00000325714 * altitude) + 9.80714; // acceleration magnitude [m/s^2]
 }
 
-// TODO: Piecewise this bastard to increase reliability (currently overestimates transonic drag because the shape just too silly)
 float get_Cd(float mach) {
   // Range of polynomial validity
   if (mach < 0.102) return 0.5854;
   if (mach > 1.196) return 0.643958;
-  
-  // These constants are obtained from ../Utilities/drag_curve.py using the OpenRocket simulation
-  double consts[] = {
-    1936133.3994550942,
-    -17892744.821186386,
-    71088901.67001748,
-    -152917036.2013894,
-    172230192.11528763,
-    -35504094.91587761,
-    -174192967.30414632,
-    222210183.0763532,
-    -11280092.992398508,
-    -277195468.76332796,
-    407642277.2545101,
-    -339272207.4266255,
-    193211104.45181522,
-    -79602959.85001652,
-    24146269.453084067,
-    -5385658.5338379815,
-    869534.4465245228,
-    -98413.60272751944,
-    7368.323058299829,
-    -326.12013526082325,
-    7.014430346070829
-  };
 
-  int poly_order = 20;
   double result = 0;
 
-  // pain
-  for (int i = 0; i < poly_order + 1; i++) {
-    result = result + ((double) pow(mach, poly_order - i) * consts[i]);
+  // Subsonic regime:
+  if (mach < 1) {
+    // These constants are obtained from ../Utilities/drag_curve.py using the OpenRocket simulation
+    double consts[] = {
+      -155187.47240576352,  // P1
+      1182842.28739123,     // P2
+      -4076124.270327396,   // P3
+      8396869.561414396,    // P4
+      -11518096.443543786,  // P5
+      11088080.449477628,   // P6
+      -7687620.83584739,    // P7
+      3872843.2085753293,   // P8
+      -1409280.065684936,   // P9
+      361534.3709655419,    // P10
+      -61669.144616050056,  // P11
+      5933.480714665612,    // P12
+      -79.88202829796315,   // P13
+      -50.317225603655366,  // P14
+      5.33300787823518,     // P15
+      0.4051088969787709,   // P16
+    };
+
+    int poly_order = 15;
+
+    // pain
+    for (int i = 0; i < poly_order + 1; i++) {
+      result = result + ((double) pow(mach, poly_order - i) * consts[i]);
+    }
+  }
+
+  // Transonic regime:
+  if (mach > 1) {
+    double consts[] = {
+      328346.5670532591,    // P1
+      -2236860.928719251,   // P2
+      5748733.5980847785,   // P3
+      -5681869.204619244,   // P4
+      -1899437.479497596,   // P5
+      7815582.122333516,    // P6
+      -1232208.6779305444,  // P7
+      -9807684.684020657,   // P8
+      11258163.949775018,   // P9
+      -5214225.478380677,   // P10
+      921460.8814625319,    // P11
+    };
+
+    int poly_order = 10;
+
+    // pain
+    for (int i = 0; i < poly_order + 1; i++) {
+      result = result + ((double) pow(mach, poly_order - i) * consts[i]);
+    }
   }
 
   return (float) result;
