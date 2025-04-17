@@ -36,6 +36,9 @@ String BEAVS_version = "5.0.0";
 
 // Initialization
 enum { SIM, FIELD };
+
+
+// SET TO FIELD BEFORE FLIGHT
 int BEAVS_mode = SIM;
 
 enum { SEA_LEVEL = 0, BROTHERS_OR = 1380 };
@@ -240,11 +243,22 @@ void arm() {
   // SAFETY PIN REMOVED: Arm BEAVS monitoring and initiate startup
   flight_phase = ARMED;
 
-  command_deflection(1);
-  delay(2000);
-  command_deflection(0.5);
-  delay(1000);
-  command_deflection(0);
+  if (BEAVS_mode == FIELD) {
+    command_deflection(1);
+    delay(2000);
+    command_deflection(0.5);
+    delay(1000);
+    command_deflection(0);
+  } else if (BEAVS_mode == SIM) {
+    command_deflection(1);
+    delay(1500);
+    command_deflection(0);
+    delay(1500);
+    command_deflection(0.5);
+    delay(1000);
+    command_deflection(0);
+    delay(1000);
+  }
 
   // Recalibrate launch ground level to current altitude?
 }
