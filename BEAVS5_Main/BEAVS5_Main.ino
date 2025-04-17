@@ -563,7 +563,29 @@ void get_trolled_idiot() {
 // Utility functions
 
 float gravity(float altitude) {          // altitude [meters]
-  return (-0.00000325714 * altitude) + 9.80714; // acceleration magnitude [m/s^2]
+  // Range of polynomial validity
+  if (altitude < 0.0008627) return 9.79211050803139;
+  if (altitude > 5554.943) return 9.774974605475466;
+
+  // These constants are obtained from ../Utilities/gravity_extractor.py using the OpenRocket simulation
+  double consts[] = {
+    -2.1835147818201505e-21,   // P1
+    2.3723692527332454e-17,   // P2
+    -7.272030320822667e-14,   // P3
+    8.20700344938699e-12,   // P4
+    -2.873840586662284e-06,   // P5
+    9.792110510510653,   // P6
+  };
+
+  int poly_order = 5;
+  double result = 0;
+
+  // pain
+  for (int i = 0; i < poly_order + 1; i++) {
+    result = result + ((double) pow(altitude, poly_order - i) * consts[i]);
+  }
+
+  return (float) result;
 }
 
 float get_Cd(float mach) {
