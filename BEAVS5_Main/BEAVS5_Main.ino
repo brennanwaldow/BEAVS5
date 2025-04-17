@@ -36,10 +36,11 @@ String BEAVS_version = "5.0.0";
 
 // Initialization
 enum { SIM, FIELD };
-
+enum { STOWED, ACTIVE };
 
 // SET TO FIELD BEFORE FLIGHT
 int BEAVS_mode = SIM;
+int BEAVS_control = ACTIVE;
 
 enum { SEA_LEVEL = 0, BROTHERS_OR = 1380 };
 float launch_altitude = SEA_LEVEL; // [meters]
@@ -168,7 +169,7 @@ void loop() {
 
   clock_time = curr_time;
 
-  delay(15);
+  delay(5);
 }
 
 
@@ -209,8 +210,7 @@ void coast_loop() {
 
   PID();
 
-  command_deflection(u);
-  // command_deflection(1);
+  if (BEAVS_control == ACTIVE) command_deflection(u);
 
   if (height > target_apogee) overshoot();
 
@@ -243,7 +243,9 @@ void arm() {
   // SAFETY PIN REMOVED: Arm BEAVS monitoring and initiate startup
   flight_phase = ARMED;
 
-  if (BEAVS_mode == FIELD) {
+  if (BEAVS_control == STOWED) {
+    command_deflection(0);
+  } else if (BEAVS_mode == FIELD) {
     command_deflection(1);
     delay(2000);
     command_deflection(0.5);
@@ -276,13 +278,12 @@ void launch() {
 void coast() {
   // ENGINE CUTOFF: Deploy BEAVS
   flight_phase = COAST;
-  command_deflection(1);
 }
 
 void overshoot() {
   // APOGEE OVERSHOT: Last full extension regime on airbrake to minimize further overshoot
   flight_phase = OVERSHOOT;
-  command_deflection(1);
+  if (BEAVS_control == ACTIVE) command_deflection(1);
 }
 
 void descend() {
@@ -363,7 +364,7 @@ void PID() {
 
   // pid_clock_time = curr_time;
 
-  // u = 0;
+  if (BEAVS_control == STOWED) u = 0;
 }
 
 void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full extend); or -1 for full retract (inside tube Inner Diameter)

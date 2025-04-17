@@ -39,6 +39,8 @@ for i in range(len(table[0])):
 apogee = table[0][-1]
 print(f'Adjusted apogee: {round(apogee, 2)} m')
 
+### TODO: adjust altitude absolute to altitude AGL!!!
+
 # Polyfit
 constants = np.polyfit(table[0], table[1], 15)
 p = np.poly1d(constants)
