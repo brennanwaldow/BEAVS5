@@ -454,10 +454,10 @@ void get_trolled_idiot() {
 
   long launch_clock = millis() - 10000;
 
-  float speed_of_sound = (-0.0039042 * altitude) + 340.3;
+  float speed_of_sound = (-0.0039389935746399 * altitude) + 340.3888956290942;
   float Mach = abs(velocity) / speed_of_sound;
   float Cd_rocket = get_Cd(Mach);
-  float air_density = (-6.85185 * (pow(10, -14)) * pow(altitude, 3)) + (4.30675 * (pow(10, -9)) * pow(altitude, 2)) + (-0.0001176 * altitude) + 1.22499;
+  float air_density = (-6.159058310425128e-14 * pow(altitude, 3) + 4.23898628189357e-09 * pow(altitude, 2) + (-0.00011741752091555341 * altitude) + 1.2251271371466361);
 
   float mass = get_mass(launch_clock);
 
@@ -530,7 +530,7 @@ void get_trolled_idiot() {
   Serial.print(" ");
   Serial.print(get_Fd_BEAVS(velocity, Cd_beavs, A_beavs, air_density));
   Serial.print(" ");
-  Serial.print(mass * 9.81);
+  Serial.print(mass * gravity(altitude));
   Serial.print(" ");
   Serial.print(thrust);
   Serial.print(" ");
@@ -698,48 +698,116 @@ float get_thrust(float time) { // [ms]
   if (time < 0) return 0;
   if (time > 4505) return 0;
 
-  // These constants are obtained from ../Utilities/thrust_extractor.py using the OpenRocket simulation
-  // TODO: piecewise this because it is just way too mf wiggly
-  double consts[] = {
-    4.940923564843739e-98,
-    -1.1230646287392833e-93,
-    8.488539419610813e-90,
-    -1.1329464586849078e-86,
-    -1.2681677749129396e-82,
-    1.441429249301959e-79,
-    2.482731453263731e-75,
-    1.5444419833545796e-72,
-    -4.5200980323593215e-68,
-    -1.291768466038105e-64,
-    6.391839613548839e-61,
-    4.084210662653841e-57,
-    -5.533707578195202e-54,
-    -9.894463095226028e-50,
-    -1.2836701454318874e-47,
-    2.2420606240466227e-42,
-    8.626623065655828e-40,
-    -5.356073212430741e-35,
-    6.661604036491461e-32,
-    1.1166429743664362e-27,
-    -7.028957711578119e-24,
-    2.1875184067063647e-20,
-    -4.346335411895379e-17,
-    5.905316525135181e-14,
-    -5.587763934942331e-11,
-    3.656550778437937e-08,
-    -1.6109874883422017e-05,
-    0.004548399710292233,
-    -0.7571652836749488,
-    64.58681375783425,
-    67.15725493723727,
-  };
-
-  int poly_order = 30;
   double result = 0;
 
-  // pain
-  for (int i = 0; i < poly_order + 1; i++) {
-    result = result + ((double) pow(time, poly_order - i) * consts[i]);
+  if (time < 37) {
+    // These constants are obtained from ../Utilities/thrust_extractor.py using the OpenRocket simulation
+    double consts[] = {
+      -4.418372606013904e-13,   // P1
+      -1.1652407369607583e-11,   // P2
+      -2.7769362913834166e-10,   // P3
+      -5.1226655302972864e-09,   // P4
+      -1.2025207751754383e-08,   // P5
+      5.745404750093319e-06,   // P6
+      0.00042155390307917076,   // P7
+      0.021542269846367295,   // P8
+      0.8540112017390363,   // P9
+      21.638784656324066,   // P10
+      11.801775916630444,   // P11
+    };
+
+    int poly_order = 10;
+
+    // pain
+    for (int i = 0; i < poly_order + 1; i++) {
+      result = result + ((double) pow(time, poly_order - i) * consts[i]);
+    }
+  } else if (time < 3247) {
+    // These constants are obtained from ../Utilities/thrust_extractor.py using the OpenRocket simulation
+    double consts[] = {
+      -4.683266251558473e-60,   // P1
+      1.1787016408257099e-55,   // P2
+      -1.3053001934264523e-51,   // P3
+      8.195452116379321e-48,   // P4
+      -3.0473216375816937e-44,   // P5
+      5.53373569555978e-41,   // P6
+      5.507473272370591e-38,   // P7
+      -6.739586893490672e-34,   // P8
+      2.2101582922098247e-30,   // P9
+      -4.4402065806942574e-27,   // P10
+      6.143566143807555e-24,   // P11
+      -6.05278350217028e-21,   // P12
+      4.284737485017909e-18,   // P13
+      -2.194460129948485e-15,   // P14
+      8.375731259447085e-13,   // P15
+      -2.565166513613027e-10,   // P16
+      6.694478794385455e-08,   // P17
+      -1.370435689909412e-05,   // P18
+      0.0017398110068922645,   // P19
+      0.5265652484823354,   // P20
+      2019.1472070293255,   // P21
+    };
+
+    int poly_order = 20;
+
+    // pain
+    for (int i = 0; i < poly_order + 1; i++) {
+      result = result + ((double) pow(time, poly_order - i) * consts[i]);
+    }
+  } else if (time < 3845) {
+    // These constants are obtained from ../Utilities/thrust_extractor.py using the OpenRocket simulation
+    double consts[] = {
+      -7.410844167287833e-25,   // P1
+      1.5869159253565406e-20,   // P2
+      -1.2787637498335573e-16,   // P3
+      3.91980856463323e-13,   // P4
+      4.63880800511925e-10,   // P5
+      -5.512836319583549e-06,   // P6
+      0.002184311260607454,   // P7
+      71.08414012383156,   // P8
+      -253541.8083138829,   // P9
+      368291256.00586903,   // P10
+      -204606014847.17206,   // P11
+    };
+
+    int poly_order = 10;
+
+    // pain
+    for (int i = 0; i < poly_order + 1; i++) {
+      result = result + ((double) pow(time, poly_order - i) * consts[i]);
+    }
+  } else {
+    // These constants are obtained from ../Utilities/thrust_extractor.py using the OpenRocket simulation
+    double consts[] = {
+      -2.602016346530579e-60,   // P1
+      4.558945310189724e-56,   // P2
+      -1.9742880419605414e-52,   // P3
+      -4.803643585951851e-49,   // P4
+      2.4900812933183475e-45,   // P5
+      1.4080048543980125e-41,   // P6
+      1.1536579800530761e-39,   // P7
+      -2.48820675014604e-34,   // P8
+      -1.0086864727069873e-30,   // P9
+      4.451273821747829e-28,   // P10
+      2.0976798439014167e-23,   // P11
+      8.176056852934267e-20,   // P12
+      -6.215673705238959e-17,   // P13
+      -1.865760177463625e-12,   // P14
+      -5.917441552604189e-09,   // P15
+      1.7417454447185615e-05,   // P16
+      0.17357742754538488,   // P17
+      -34.14780408995746,   // P18
+      -3982983.82466763,   // P19
+      11810206202.977266,   // P20
+      -10367368152316.086,   // P21
+    };
+
+    int poly_order = 20;
+
+    // pain
+    for (int i = 0; i < poly_order + 1; i++) {
+      result = result + ((double) pow(time, poly_order - i) * consts[i]);
+    }
   }
 
   return (float) result;
