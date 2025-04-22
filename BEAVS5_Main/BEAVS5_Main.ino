@@ -172,7 +172,7 @@ void loop() {
 
   clock_time = curr_time;
 
-  delay(5);
+  delay(25);
 }
 
 
@@ -480,7 +480,7 @@ void get_trolled_idiot() {
   if (velocity < 0) dir = -1;
 
   // TODO: Update for new Outer Diameter when openrocket finalized
-  float A_ref = 0.019113;
+  float A_ref = 0.020358;
   float virtual_deflection = max((virtual_angle - 8.86) / (150 - 8.86), 0);
   float A_beavs = ((feet_to_meters(1.632 / 12) * feet_to_meters(2.490 / 12)) * 2) * virtual_deflection;
   // TODO: Polyfit from Ansys Fluent god help us
