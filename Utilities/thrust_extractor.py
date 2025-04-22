@@ -7,7 +7,7 @@ dataset = '5.3.10'
 # Time [s], thrust [N]
 thrust_table = [[[], []], [[], []], [[], []], [[], []]]
 
-breakpoints = [37, 3247, 3845]
+breakpoints = [37, 3247, 3790]
 
 ## Reader designed for OpenRocket simulation CSV export, NOT recorded flight telemetry
 with open('Utilities/Data/' + dataset + '_DataSet.csv', newline='') as csvfile:
