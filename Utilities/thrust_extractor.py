@@ -2,7 +2,7 @@ import csv
 from matplotlib import pyplot as plt
 import numpy as np
 
-dataset = '5.3.2'
+dataset = '5.3.10'
 
 # Time [s], thrust [N]
 table = [[], []]
@@ -25,7 +25,7 @@ with open('Utilities/Data/' + dataset + '_DataSet.csv', newline='') as csvfile:
         if (thrust == 0): break
 
 # Polyfit
-constants = np.polyfit(table[0], table[1], 20)
+constants = np.polyfit(table[0], table[1], 50)
 p = np.poly1d(constants)
 
 # Output
@@ -44,8 +44,8 @@ for const in constants:
     print(f'    {const},')
     i += 1
 
-print(f'\nPolynomial lower bound: {table[0][0]} s')
-print(f'Polynomial upper bound: {table[0][-1]} s')
+print(f'\nPolynomial lower bound: {table[0][0]} ms')
+print(f'Polynomial upper bound: {table[0][-1]} ms')
                       
 # Graph velocity table
 fig, axes = plt.subplots(1, 1)

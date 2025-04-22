@@ -2,7 +2,7 @@ import csv
 from matplotlib import pyplot as plt
 import numpy as np
 
-dataset = '5.3.2'
+dataset = '5.3.10'
 
 # Mach [M], drag coefficient [Cd]
 drag_table_apogee = [[], []]
@@ -11,7 +11,7 @@ drag_table_transonic = [[], []]
 base_table = [[], []]
 
 apogee_transition = 0.1 # [Mach]
-transonic_transition = 1 # [Mach]
+transonic_transition = 0.9 # [Mach]
 
 ## Reader designed for OpenRocket simulation CSV export, NOT recorded flight telemetry
 with open('Utilities/Data/' + dataset + '_HighSpeed_DataSet.csv', newline='') as csvfile:
@@ -71,6 +71,8 @@ with open('Utilities/Data/' + dataset + '_DataSet.csv', newline='') as csvfile:
             base_table[0].append(mach)
             base_table[1].append(drag_coeff)
 
+print(drag_table_transonic)
+
 
 # Polyfit
 constants_apogee = np.polyfit(drag_table_apogee[0], drag_table_apogee[1], 15)
@@ -79,15 +81,13 @@ p_apogee = np.poly1d(constants_apogee)
 constants_subsonic = np.polyfit(drag_table_subsonic[0], drag_table_subsonic[1], 15)
 p_subsonic = np.poly1d(constants_subsonic)
 
-constants_transonic = np.polyfit(drag_table_transonic[0], drag_table_transonic[1], 10)
+constants_transonic = np.polyfit(drag_table_transonic[0], drag_table_transonic[1], 15)
 p_transonic = np.poly1d(constants_transonic)
 
 # Print for easy copy-paste into Arduino IDE
 
 print('\n--- Polynomial Constants ---\n')
 
-
-print(drag_table_apogee)
 
 print('\nApogee: \n')
 
@@ -135,7 +135,7 @@ plt.axvline(x=transonic_transition, color='black', ls='--')
 def old_drag_curve(m):
     return (0.0936073 * (m**3)) + (-0.0399526 * (m**2)) + (0.0455436 * m) + 0.582895;
 x = np.linspace(0, drag_table_transonic[0][0] + 0, 1000)
-axes.plot(x, old_drag_curve(x), 'b', label='Old drag curve')
+# axes.plot(x, old_drag_curve(x), 'b', label='Old drag curve')
 
 axes.set_xlabel('Mach (M)')
 axes.set_ylabel('Rocket drag coefficient, Cd')
