@@ -18,12 +18,16 @@ with open('Utilities/Data/' + dataset + '_DataSet.csv', newline='') as csvfile:
         time = float(time)
         velocity = float(row[2])
         mass = float(row[19])
+        thrust = float(row[28])
 
         table[0].append(time * 1000) # Convert [s] to [ms]
         table[1].append(mass / 1000) # Convert [g] to [kg]
         
         # Stop at apogee
         if (velocity < 0 and time > 0.5): break
+
+        # Stop at burnout
+        if (thrust == 0): break
 
 # Polyfit
 constants = np.polyfit(table[0], table[1], 15)
@@ -46,7 +50,7 @@ for const in constants:
     i += 1
 
 print(f'\nPolynomial lower bound: {table[1][0]} kg')
-print(f'Polynomial upper bound at t = 10s: {table[1][-1]} kg')
+print(f'Polynomial upper bound at t = {table[0][-1]} ms: {table[1][-1]} kg')
                       
 # Graph velocity table
 fig, axes = plt.subplots(1, 1)
