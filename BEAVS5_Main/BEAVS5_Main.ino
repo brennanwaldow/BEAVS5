@@ -172,7 +172,7 @@ void loop() {
 
   clock_time = curr_time;
 
-  delay(25);
+  delay(5);
 }
 
 
@@ -480,7 +480,7 @@ void get_trolled_idiot() {
   if (velocity < 0) dir = -1;
 
   // TODO: Update for new Outer Diameter when openrocket finalized
-  float A_ref = 0.020358;
+  float A_ref = 0.0174;
   float virtual_deflection = max((virtual_angle - 8.86) / (150 - 8.86), 0);
   float A_beavs = ((feet_to_meters(1.632 / 12) * feet_to_meters(2.490 / 12)) * 2) * virtual_deflection;
   // TODO: Polyfit from Ansys Fluent god help us
@@ -504,10 +504,10 @@ void get_trolled_idiot() {
   if (altitude < launch_altitude) altitude = launch_altitude;
 
   // Fix flight conditions to post-launch without simulating burn:
-  // if (launch_clock < (4.16 - 0.05) * 1000) {
-  //   altitude = 846.352;
+  // if (launch_clock < (4.505) * 1000) {
+  //   altitude = 796.68;
   //   acceleration = 0;
-  //   velocity = 339.186;
+  //   velocity = 285.398;
   // } else {
   //   flight_phase = COAST;
   // }
