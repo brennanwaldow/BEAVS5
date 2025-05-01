@@ -37,21 +37,27 @@ String BEAVS_version = "5.0.0";
 
 // Initialization
 enum { SIM, FIELD };
-enum { STOWED, ACTIVE };
+    // SIM -- False telemetry data from On-Board Simulation
+    // FIELD -- Live telemetry data from flight instruments
+enum { STOWED, ZEROING, MAX_BRAKING, ACTIVE };
+    // STOWED -- Flight computer runs, BEAVS blades remain flush with Outer Diameter
+    // ZEROING -- For blade installation / integration, blade gear returns to zero position at Inner Diameter
+    // ACTIVE -- PID loop controls blade deflection
 
 // TODO: SET TO FIELD/ACTIVE BEFORE FLIGHT
 int BEAVS_mode = SIM;
 int BEAVS_control = ACTIVE;
 
 enum { SEA_LEVEL = 0, BROTHERS_OR = 1380 };
-float launch_altitude = SEA_LEVEL; // [meters]
+float launch_altitude = BROTHERS_OR; // [meters]
 // TODO: Obtain pressure forecast and calibrate for launch
 float launch_altimeter = inhg_to_hpa(30.49); // [HPa]
 float target_apogee = feet_to_meters(10000.0); // [meters], AGL
 
 // Simulation only
 float launch_angle = 0; // [degrees], from vertical
-float thrust_modulation = 1; // [multiplier]
+float thrust_modulation = 1; // [multiplier]; modulate thrust curve to test performance under deviation from theoretical
+float blade_modulation = 1; // [multiplier]; modulate blade drag coefficient to test performance under deviation from theoretical
 
 float perpendicular_acceleration = 0; // [m/s^2]
 float perpendicular_velocity = 0; // [m/s]
@@ -81,9 +87,9 @@ int servo_pin = 28; // GPIO 28 / Physical Pin 34
 // double kd = 0;
 // TODO: perfect performance at Kd = 0?? investigate further, especially for noise damping
 
-double kp = 5.600e-05 * 2.5;
-double ki = 2.500e-06 * 0.5;
-double kd = 4.688e-05 * 0.1;
+double kp = 5.600e-05 * 3;
+double ki = 2.500e-06;
+double kd = 4.688e-05;
 
 
 float target_velocity = 0; // [m/s]
@@ -108,14 +114,13 @@ long max_height_clock = 0;         // [ms]
 float commanded_angle = 0;         // [degrees; 0 to 270]
 float virtual_angle = 0;           // [degrees; 0 to 270]
 
-/* Flight Phase
--- 0: Preflight Safe
--- 1: Preflight Armed
--- 2: Flight Phase
--- 3: Coast Phase (BEAVing)
--- 4: Descent Phase
-*/
 enum { PREFLIGHT, ARMED, FLIGHT, COAST, OVERSHOOT, DESCENT };
+    // PREFLIGHT -- Rocket is on the ground, safed with Remove Before Flight pin installed, blades flush with Inner Diameter
+    // ARMED -- Remove Before Flight pin removed, startup animation played, blades flush with Outer Diameter
+    // FLIGHT -- Motor ignition detected, currently burning and accelerating
+    // COAST -- Motor burnout detected, BEAVS blades running according to BEAVS Control enum
+    // OVERSHOOT -- Target apogee passed, last-ditch full extension deployment of blades to minimize overshoot
+    // DESCENT -- Apogee detected, blades retracted flush with Outer Diameter and control loop ceased
 int flight_phase = PREFLIGHT;
 
 
@@ -212,9 +217,11 @@ void coast_loop() {
   collect_telemetry();
   calculate_telemetry();
 
-  PID();
+  if (BEAVS_control == ACTIVE) {
+    tick_PID();
 
-  if (BEAVS_control == ACTIVE) command_deflection(u);
+    command_deflection(u);
+  }
 
   if (height > target_apogee) overshoot();
 
@@ -256,14 +263,20 @@ void arm() {
     delay(1000);
     command_deflection(0);
   } else if (BEAVS_mode == SIM) {
-    command_deflection(1);
-    delay(1500);
-    command_deflection(0);
-    delay(1500);
-    command_deflection(0.5);
-    delay(1000);
-    command_deflection(0);
-    delay(1000);
+    if (BEAVS_control == ZEROING) {
+      command_deflection(0);
+    } else if (BEAVS_control == MAX_BRAKING) {
+      command_deflection(1);
+    } else {
+      command_deflection(1);
+      delay(1500);
+      command_deflection(0);
+      delay(1500);
+      command_deflection(0.5);
+      delay(1000);
+      command_deflection(0);
+      delay(1000);
+    }
   }
 
   // Recalibrate launch ground level to current altitude?
@@ -343,7 +356,7 @@ void calculate_telemetry() {
 }
 
 // Tick PID controller
-void PID() {
+void tick_PID() {
   // long curr_time = micros();
   double dt = (curr_time - clock_time) / (double) 1000;
 
@@ -485,7 +498,7 @@ void get_trolled_idiot() {
   float virtual_deflection = max((virtual_angle - 8.86) / (150 - 8.86), 0);
   float A_beavs = ((feet_to_meters(1.632 / 12) * feet_to_meters(2.490 / 12)) * 2) * virtual_deflection;
   // TODO: Polyfit from Ansys Fluent god help us
-  float Cd_beavs = 4.8 * (sqrt(A_beavs / A_ref));
+  float Cd_beavs = 4.8 * (sqrt(A_beavs / A_ref)) * blade_modulation;
   float Cd = Cd_rocket + (Cd_beavs * (A_beavs / A_ref));
 
   float Fd = (0.5 * air_density * (velocity * velocity) * Cd * A_ref) * dir;
@@ -530,6 +543,8 @@ void get_trolled_idiot() {
   Serial.print(Fd);
   Serial.print(" ");
   Serial.print(get_Fd_BEAVS(velocity, Cd_beavs, A_beavs, air_density));
+  Serial.print(" ");
+  Serial.print(get_Fd_BEAVS(velocity, 4.8 * (sqrt(((feet_to_meters(1.632 / 12) * feet_to_meters(2.490 / 12)) * 2) / A_ref)), ((feet_to_meters(1.632 / 12) * feet_to_meters(2.490 / 12)) * 2), air_density));
   Serial.print(" ");
   Serial.print(mass * gravity(altitude));
   Serial.print(" ");

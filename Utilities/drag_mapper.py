@@ -54,7 +54,7 @@ def mach_to_ms(mach):
 
 # Drag function
 def get_BEAVS_drag(mach, deflection):
-    A_ref = 0.019113
+    A_ref = 0.017424685
     A_beavs = 0.0052434475776 * deflection
     cd_beavs = 4.8 * np.sqrt(A_beavs / A_ref)
 
