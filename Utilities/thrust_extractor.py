@@ -2,7 +2,7 @@ import csv
 from matplotlib import pyplot as plt
 import numpy as np
 
-dataset = '5.3.10'
+dataset = '5.3.10_Brothers'
 
 # Time [s], thrust [N]
 thrust_table = [[], []]
@@ -26,7 +26,7 @@ with open('Utilities/Data/' + dataset + '_DataSet.csv', newline='') as csvfile:
 
 # Output for paste into Arduino
 
-print(f'double xValues[{len(thrust_table[0])}] = ', end='')
+print(f'double timeValues[{len(thrust_table[0])}] = ', end='')
 print('{ ', end='')
 
 for time in thrust_table[0]:
@@ -35,7 +35,7 @@ print('};')
 
 print('\n\n')
 
-print(f'double yValues[{len(thrust_table[1])}] = ', end='')
+print(f'double thrustValues[{len(thrust_table[1])}] = ', end='')
 print('{ ', end='')
 
 for thrust in thrust_table[1]:

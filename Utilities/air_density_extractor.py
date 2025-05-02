@@ -2,7 +2,9 @@ import csv
 from matplotlib import pyplot as plt
 import numpy as np
 
-dataset = '5.3.10'
+dataset = '5.3.10_Brothers'
+launch_altitude = 1380
+# Openrocket sims are in AGL - set this to launch altitude used (Brothers = 1,380m)
 
 # Altitude [m], gravitational acceleration [m/s^2]
 table = [[], []]
@@ -17,7 +19,7 @@ with open('Utilities/Data/' + dataset + '_HighSpeed_DataSet.csv', newline='') as
         if (time == '# Time (s)'): continue
 
         time = float(time)
-        altitude = float(row[1])
+        altitude = float(row[1]) + launch_altitude
         velocity = float(row[2])
 
         temperature = float(row[49]) + 273.15     # Convert to [K]

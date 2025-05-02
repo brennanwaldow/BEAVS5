@@ -2,8 +2,11 @@ import csv
 from matplotlib import pyplot as plt
 import numpy as np
 
-dataset = '5.3.10'
+dataset = '5.3.10_Brothers'
 target_apogee = 3048 # [m]
+
+# Note that while other extractors use a Launch Altitude offset, the lookup table is a function of HEIGHT, not ALTITUDE, so it remains unadjusted
+
 
 # Altitude [m], velocity [m/s]
 table = [[], []]
@@ -78,7 +81,7 @@ def f(x):
 vel = []
 for alt in table[0]:
     vel.append(f(alt))
-axes.plot(table[0], vel, label='Old polyfit')
+# axes.plot(table[0], vel, label='Old polyfit')
 
 axes.set_xlabel('Altitude (m)')
 axes.set_ylabel('Velocity (m/s)')
