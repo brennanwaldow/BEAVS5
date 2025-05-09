@@ -10,6 +10,7 @@ Servo: DS3235
 // -----   Libraries   -----
 #include <Wire.h>
 #include <SPI.h>
+#include <SD.h>
 #include <Adafruit_Sensor.h>
 #include "Adafruit_BMP3XX.h"
 #include <Adafruit_BNO055.h>
@@ -45,7 +46,7 @@ enum { STOWED, ZEROING, MAX_BRAKING, ACTIVE };
     // ACTIVE -- PID loop controls blade deflection
 
 // TODO: SET TO FIELD/ACTIVE BEFORE FLIGHT
-int BEAVS_mode = SIM;
+int BEAVS_mode = FIELD;
 int BEAVS_control = ACTIVE;
 
 enum { SEA_LEVEL = 0, BROTHERS_OR = 1380 };
@@ -72,6 +73,18 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 
 // Servo
 int servo_pin = 28; // GPIO 28 / Physical Pin 34
+
+// SD
+File log_file;
+File telemetry_file;
+int log_index;
+String log_filename;
+String telemetry_filename;
+
+const int SD_pin_MISO = 16;
+const int SD_pin_MOSI = 19;
+const int SD_pin_CS = 17;
+const int SD_pin_SCK = 18;
 
 // PID constants
 // float kp = 0.2000e-04;
@@ -128,7 +141,7 @@ int flight_phase = PREFLIGHT;
 void setup() {
   Serial.begin(115200);
   // Wait for serial to initialize
-  delay(500);
+  delay(3000);
 
   Serial.println("Starting up hardware...");
 
@@ -146,6 +159,45 @@ void setup() {
 
   pinMode(servo_pin, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
+
+  // Initialize SD card
+  bool setRX(SD_pin_MISO);
+  bool setTX(SD_pin_MOSI);
+  bool setSCK(SD_pin_SCK);
+  bool sdInitialized = false;
+  sdInitialized = SD.begin(SD_pin_CS);
+
+  if (!sdInitialized) {
+    Serial.println("oh. le bummer (sd card failed)");
+  } else {
+    Serial.println("yay! sd card");
+    // Serial.print("test.txt exists: ");
+    // Serial.println(SD.exists("test.txt"));
+    // Serial.println("Writing test.txt...");
+    // file = SD.open("test.txt", FILE_WRITE);
+    // file.println("i love ROMKET");
+    // file.close();
+    // Serial.println("test.txt written:)");
+    // Serial.println("Reading test.txt...");
+    // file = SD.open("test.txt", FILE_READ);
+    // Serial.println("Contents of test.txt: ");
+    // while (file.available()) {
+    //   Serial.write(file.read());
+    // }
+    // file.close();
+
+    // Search for the first available log slot
+    for (int i = 1; i < 10000; i++) {
+      String filename = "Logs/log_" + String(i) + ".txt";
+      if (SD.exists(filename) == 1) continue;
+      log_index = i;
+      log_filename = filename;
+      telemetry_filename = "Telemetry/output_" + String(log_index) + ".csv";
+      break;
+    }
+
+    log("Startup complete.");
+  }
 
   // Ensure servo is fully stowed
   command_deflection(-1);
@@ -313,6 +365,14 @@ void descend() {
 
 // -----   Functions   -----
 
+void log(String message) {
+  log_file = SD.open(log_filename, FILE_WRITE);
+  String timestamp = "[" + String(millis() / 1000.0, 2) + "s] ";
+  log_file.println(timestamp + message);
+  log_file.close();
+  Serial.println(timestamp + message);
+}
+
 void collect_telemetry() {
   if (BEAVS_mode == SIM) get_trolled_idiot();
   else {
@@ -336,13 +396,13 @@ void collect_telemetry() {
     event->type == SENSOR_TYPE_ACCELEROMETER;
     acceleration = -(event->acceleration.z) + gravity(altitude);
 
-    Serial.print(altitude);
-    Serial.print(" ");
-    Serial.print(prev_altitude);
-    Serial.print(" ");
-    Serial.print(dt);
-    Serial.print(" ");
-    Serial.println(velocity);
+    // Serial.print(altitude);
+    // Serial.print(" ");
+    // Serial.print(prev_altitude);
+    // Serial.print(" ");
+    // Serial.print(dt);
+    // Serial.print(" ");
+    // Serial.println(velocity);
     delay(50);
   }
 }
@@ -370,7 +430,7 @@ void tick_PID() {
   if (u > 1) u = 1;
   if (u < 0) u = 0;
 
-  if (error1 < 0) u = 0;
+  // if (error1 < 0) u = 0;
   
   // Serial.print(dt);
   // Serial.print(" ");
