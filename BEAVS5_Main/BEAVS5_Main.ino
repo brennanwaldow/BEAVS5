@@ -10,7 +10,7 @@ Servo: DS3235
 // -----   Libraries   -----
 #include <Wire.h>
 #include <SPI.h>
-#include <SD.h>
+#include <SdFat.h>
 #include <Adafruit_Sensor.h>
 #include "Adafruit_BMP3XX.h"
 #include <Adafruit_BNO055.h>
@@ -46,7 +46,7 @@ enum { STOWED, ZEROING, MAX_BRAKING, ACTIVE };
     // ACTIVE -- PID loop controls blade deflection
 
 // TODO: SET TO FIELD/ACTIVE BEFORE FLIGHT
-int BEAVS_mode = FIELD;
+int BEAVS_mode = SIM;
 int BEAVS_control = ACTIVE;
 
 enum { SEA_LEVEL = 0, BROTHERS_OR = 1380 };
@@ -67,24 +67,31 @@ float perpendicular_velocity = 0; // [m/s]
 #define WIRE Wire
 #define SEALEVELPRESSURE_HPA (launch_altimeter)
 Adafruit_BMP3XX bmp;
+bool BMP_failure = true;
 
 // BNO055
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
+bool BNO_failure = true;
 
 // Servo
 int servo_pin = 28; // GPIO 28 / Physical Pin 34
 
 // SD
-File log_file;
-File telemetry_file;
+SdFs SD;
+FsFile log_file;
+FsFile telemetry_file;
 int log_index;
 String log_filename;
 String telemetry_filename;
+bool SD_failure = true;
 
 const int SD_pin_MISO = 16;
 const int SD_pin_MOSI = 19;
 const int SD_pin_CS = 17;
 const int SD_pin_SCK = 18;
+
+#define SPI_CLOCK SD_SCK_MHZ(50)
+#define SD_CONFIG SdSpiConfig(SD_pin_CS, DEDICATED_SPI, SPI_CLOCK)
 
 // PID constants
 // float kp = 0.2000e-04;
@@ -147,14 +154,22 @@ void setup() {
 
   Wire.begin();
 
-  if (!bmp.begin_I2C(0x77)) Serial.println("BMP390 invalid!");
+  if (!bmp.begin_I2C(0x77)) {
+    Serial.println("ERROR: BMP390 failed to initialize.");
+  } else {
+    BMP_failure = false;
+  }
 
   bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
   bmp.setPressureOversampling(BMP3_OVERSAMPLING_16X);
   bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
   bmp.setOutputDataRate(BMP3_ODR_50_HZ);
 
-  if (!bno.begin()) Serial.println("BNO055 invalid!");
+  if (!bno.begin()) {
+    Serial.println("ERROR: BNO055 failed to initialize.");
+  } else {
+    BNO_failure = false;
+  }
   bno.setExtCrystalUse(true);
 
   pinMode(servo_pin, OUTPUT);
@@ -165,26 +180,12 @@ void setup() {
   bool setTX(SD_pin_MOSI);
   bool setSCK(SD_pin_SCK);
   bool sdInitialized = false;
-  sdInitialized = SD.begin(SD_pin_CS);
+  sdInitialized = SD.begin(SD_CONFIG);
 
   if (!sdInitialized) {
-    Serial.println("oh. le bummer (sd card failed)");
+    Serial.println("ERROR: SD card writer failed to initialize.");
   } else {
-    Serial.println("yay! sd card");
-    // Serial.print("test.txt exists: ");
-    // Serial.println(SD.exists("test.txt"));
-    // Serial.println("Writing test.txt...");
-    // file = SD.open("test.txt", FILE_WRITE);
-    // file.println("i love ROMKET");
-    // file.close();
-    // Serial.println("test.txt written:)");
-    // Serial.println("Reading test.txt...");
-    // file = SD.open("test.txt", FILE_READ);
-    // Serial.println("Contents of test.txt: ");
-    // while (file.available()) {
-    //   Serial.write(file.read());
-    // }
-    // file.close();
+    SD_failure = false;
 
     // Search for the first available log slot
     for (int i = 1; i < 10000; i++) {
@@ -192,7 +193,9 @@ void setup() {
       if (SD.exists(filename) == 1) continue;
       log_index = i;
       log_filename = filename;
-      telemetry_filename = "Telemetry/output_" + String(log_index) + ".csv";
+      telemetry_filename = "Data/data_" + String(log_index) + ".csv";
+
+      log("Initiating logger with index " + String(log_index) + ".");
       break;
     }
 
@@ -206,6 +209,13 @@ void setup() {
 // -----   Control Loop   -----
 void loop() {
   curr_time = micros();
+
+  if ((SD_failure == true) || (BMP_failure == true) || (BNO_failure == true)) {
+    int error_strobe = round(((curr_time) % 1000000) / 1000000.0);
+    digitalWrite(LED_BUILTIN, error_strobe);
+  } else {
+    digitalWrite(LED_BUILTIN, HIGH);
+  }
 
   switch(flight_phase) {
     case PREFLIGHT:
@@ -244,16 +254,21 @@ void preflight_loop() {
 
   collect_telemetry();
   calculate_telemetry();
+  // TODO: disable telemetry write on ground for final flight
+  write_telemetry();
 }
 
 void ready_loop() {
-  digitalWrite(LED_BUILTIN, HIGH);
+  // digitalWrite(LED_BUILTIN, HIGH);
+
   // delay(100);
   // digitalWrite(LED_BUILTIN, LOW);
   // delay(100);
 
   collect_telemetry();
   calculate_telemetry();
+  // TODO: disable telemetry write on ground for final flight
+  write_telemetry();
 
   if (acceleration > 10) launch();
 }
@@ -261,6 +276,7 @@ void ready_loop() {
 void flight_loop() {
   collect_telemetry();
   calculate_telemetry();
+  write_telemetry();
 
   if (acceleration < 5) coast();
 }
@@ -268,6 +284,7 @@ void flight_loop() {
 void coast_loop() {
   collect_telemetry();
   calculate_telemetry();
+  write_telemetry();
 
   if (BEAVS_control == ACTIVE) {
     tick_PID();
@@ -286,6 +303,7 @@ void coast_loop() {
 void overshoot_loop() {
   collect_telemetry();
   calculate_telemetry();
+  write_telemetry();
 
   if (max_height > (height + 50)) descend();
 
@@ -306,7 +324,10 @@ void arm() {
   // SAFETY PIN REMOVED: Arm BEAVS monitoring and initiate startup
   flight_phase = ARMED;
 
+  log("Safety pin removed. BEAVS arming.");
+
   if (BEAVS_control == STOWED) {
+    log("BEAVS control: STOWED.");
     command_deflection(0);
   } else if (BEAVS_mode == FIELD) {
     command_deflection(1);
@@ -315,6 +336,7 @@ void arm() {
     delay(1000);
     command_deflection(0);
   } else if (BEAVS_mode == SIM) {
+    log("BEAVS running in SIM mode.");
     if (BEAVS_control == ZEROING) {
       command_deflection(0);
     } else if (BEAVS_control == MAX_BRAKING) {
@@ -337,28 +359,34 @@ void arm() {
 void disarm() {
   // SAFETY PIN REINSERTED: Return to Disarmed state
   flight_phase = PREFLIGHT;
+  log("Safety pin reinserted. Disarming.");
 }
 
 void launch() {
   // ENGINE IGNITION: Arm BEAVS monitoring for cutoff
   flight_phase = FLIGHT;
+  log("Motor ignition detected.");
 }
 
 void coast() {
   // ENGINE CUTOFF: Deploy BEAVS
   flight_phase = COAST;
+  log("Coast phase entered, beginning deployment.");
 }
 
 void overshoot() {
   // APOGEE OVERSHOT: Last full extension regime on airbrake to minimize further overshoot
   flight_phase = OVERSHOOT;
   if (BEAVS_control == ACTIVE) command_deflection(1);
+  log("Target apogee overshot! Extending full braking.");
 }
 
 void descend() {
   // APOGEE REACHED: BEAVS safing, PID shutdown
   flight_phase = DESCENT;
   command_deflection(0);
+  log("Apogee reached.");
+  log("Altitude achieved: " + String(height, 2) + " m AGL   //   " + String(meters_to_feet(height), 2) + " ft AGL");
 }
 
 
@@ -366,18 +394,37 @@ void descend() {
 // -----   Functions   -----
 
 void log(String message) {
-  log_file = SD.open(log_filename, FILE_WRITE);
+  log_file = SD.open(log_filename, O_CREAT | O_WRITE | O_APPEND);
   String timestamp = "[" + String(millis() / 1000.0, 2) + "s] ";
   log_file.println(timestamp + message);
   log_file.close();
   Serial.println(timestamp + message);
 }
 
+void write_telemetry() {
+  telemetry_file = SD.open(telemetry_filename, O_CREAT | O_WRITE | O_APPEND);
+  String timestamp = String(millis() / 1000.0, 4);
+  String telemetry_string = timestamp + ","
+                          + altitude + ","
+                          + height + ","
+                          + velocity + ","
+                          + acceleration + ","
+                          + commanded_angle + ","
+                          + flight_phase;
+  telemetry_file.println(telemetry_string);
+  telemetry_file.close();
+}
+
 void collect_telemetry() {
   if (BEAVS_mode == SIM) get_trolled_idiot();
   else {
     // BMP390
-    if (!bmp.performReading()) Serial.println("BMP390 Reading failed!");
+    if (!bmp.performReading()) {
+      Serial.println("BMP390 Reading failed!");
+      BMP_failure = true;
+    } else {
+      BMP_failure = false;
+    }
 
     float prev_altitude = altitude;
     altitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
@@ -415,7 +462,6 @@ void calculate_telemetry() {
   }
 }
 
-// Tick PID controller
 void tick_PID() {
   // long curr_time = micros();
   double dt = (curr_time - clock_time) / (double) 1000;
@@ -530,7 +576,7 @@ void get_trolled_idiot() {
 
   // Motor cutout at 4 s, apogee at 25.03
 
-  long launch_clock = millis() - 10000;
+  long launch_clock = millis() - 15000;
 
   float speed_of_sound = (-0.003938999995558203 * altitude) + 340.3888999387908;
   float Mach = abs(velocity) / speed_of_sound;
