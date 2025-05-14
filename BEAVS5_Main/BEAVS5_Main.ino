@@ -342,14 +342,22 @@ void arm() {
     } else if (BEAVS_control == MAX_BRAKING) {
       command_deflection(1);
     } else {
-      command_deflection(1);
-      delay(1500);
+      command_deflection(0.3);
+      delay(500);
       command_deflection(0);
-      delay(1500);
-      command_deflection(0.5);
-      delay(1000);
+      delay(500);
+      command_deflection(0.3);
+      delay(500);
       command_deflection(0);
-      delay(1000);
+      delay(500);
+      command_deflection(0.3);
+      delay(500);
+      command_deflection(0);
+      delay(500);
+      command_deflection(0.3);
+      delay(500);
+      command_deflection(0);
+      delay(500);
     }
   }
 
