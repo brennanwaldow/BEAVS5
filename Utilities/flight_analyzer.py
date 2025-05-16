@@ -11,6 +11,7 @@ phase_changes = []
 target_agl = 3048
 launch_elevation = 1380
 
+# Reader designed for BEAVS5 SD card logging
 with open('Utilities/Data/Flight Data/data_' + index + '.csv', newline='') as csvfile:
     reader = csv.reader(csvfile)
     for row in reader:

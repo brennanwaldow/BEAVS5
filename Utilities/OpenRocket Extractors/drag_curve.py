@@ -67,15 +67,16 @@ with open('Utilities/Data/' + dataset + '_DataSet.csv', newline='') as csvfile:
             base_table[0].append(mach)
             base_table[1].append(drag_coeff)
 
-# Reverse tables (coast phase is in descending mach)
+# Reverse tables (coast phase is in descending Mach)
 drag_table[0].reverse()
 drag_table[1].reverse()
 drag_table_apogee[0].reverse()
 drag_table_apogee[1].reverse()
 
-# Print for easy copy-paste into Arduino IDE
 
-print(f'double machValues[{len(drag_table[0])}] = ', end='')
+# Print arrays for easy copy-paste into Arduino IDE
+
+print(f'\n\ndouble machValues[{len(drag_table[0])}] = ', end='')
 print('{ ', end='')
 
 for mach in drag_table[0]:
@@ -95,10 +96,7 @@ print(f'\n\n\nLower bound (apogee): Cd = {drag_table_apogee[1][0]} at M{drag_tab
 print(f'Lower bound (coast): Cd = {drag_table[1][0]} at M{drag_table[0][0]}')
 print(f'Upper bound: Cd = {drag_table[1][-1]} at M{drag_table[0][-1]}')
 
-# print(f'\nPolynomial upper bound: M {drag_table_transonic[0][0]}, at Cd = {p_transonic(drag_table_transonic[0][0])}')
-# print(f'Polynomial lower bound (subsonic): M {drag_table_subsonic[0][-1]}, at Cd = {p_subsonic(drag_table_subsonic[0][-1])}')
-# print(f'Polynomial lower bound (apogee): M {drag_table_apogee[0][-1]}, at Cd = {p_apogee(drag_table_apogee[0][-1])}')
-
+print('\n')
 
 # Graph drag table
 fig, axes = plt.subplots(1, 1)
@@ -110,10 +108,11 @@ axes.plot(base_table[0], base_table[1], label='OpenRocket simulation')
 plt.axvline(x=apogee_transition, color='black', ls='--')
 plt.axvline(x=max_mach, color='black', ls='--')
 
-def old_drag_curve(m):
-    return (0.0936073 * (m**3)) + (-0.0399526 * (m**2)) + (0.0455436 * m) + 0.582895;
-x = np.linspace(0, drag_table[0][0], 1000)
-axes.plot(x, old_drag_curve(x), 'b', label='Old drag curve')
+# Optional: Compare against a previous drag curve polynomial approximation
+# def old_drag_curve(m):
+#     return (0.0936073 * (m**3)) + (-0.0399526 * (m**2)) + (0.0455436 * m) + 0.582895;
+# x = np.linspace(0, drag_table[0][-1], 1000)
+# axes.plot(x, old_drag_curve(x), 'b', label='Old drag curve')
 
 axes.set_xlabel('Mach (M)')
 axes.set_ylabel('Rocket drag coefficient, Cd')

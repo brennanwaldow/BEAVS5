@@ -6,7 +6,7 @@ dataset = '5.3.10_Brothers'
 launch_altitude = 1380
 # Openrocket sims are in AGL - set this to launch altitude used (Brothers = 1,380m)
 
-# Altitude [m], gravitational acceleration [m/s^2]
+# Altitude [m], air density [kg/m^3]
 table = [[], []]
 
 ## Reader designed for OpenRocket simulation CSV export, NOT recorded flight telemetry
@@ -22,10 +22,10 @@ with open('Utilities/Data/' + dataset + '_HighSpeed_DataSet.csv', newline='') as
         altitude = float(row[1]) + launch_altitude
         velocity = float(row[2])
 
-        temperature = float(row[49]) + 273.15     # Convert to [K]
-        pressure = float(row[50]) * 100     # Convert to [Pa]
+        temperature = float(row[49]) + 273.15     # Convert [C] to [K]
+        pressure = float(row[50]) * 100     # Convert [hPa] to [Pa]
 
-        density = (pressure / (287.058 * temperature))
+        density = (pressure / (287.058 * temperature))      # [kg/m^3]
 
         # Stop at apogee
         if (velocity < 0 and time > 0.5): break
@@ -46,10 +46,10 @@ for const in constants:
     print(f'    {const},   // P{i}')
     i += 1
 
-# print(f'\nPolynomial lower bound: {table[0][0]} m, at {p(table[0][0])} m/s^2')
-# print(f'Polynomial upper bound: {table[0][-1]} m, at {p(table[0][-1])} m/s^2')
+print(f'\nPolynomial lower bound: {table[0][0]} kg/m^3, at {p(table[0][0])} m')
+print(f'Polynomial upper bound: {table[0][-1]} kg/m^3, at {p(table[0][-1])} m\n\n')
 
-                      
+
 # Graph density table
 fig, axes = plt.subplots(1, 1)
 
@@ -59,10 +59,8 @@ axes.plot(table[0], p(table[0]), label='Polynomial fit')
 def old_curve(h):
     return (-6.85185e-14 * (h**3)) + (4.30675e-09 * (h**2)) + (-0.0001176 * h) + 1.22499
 
-print(old_curve(3048))
-
 x = np.linspace(0, table[0][-1], 1000)
-axes.plot(x, old_curve(x), 'b', label='Old density curve')
+# axes.plot(x, old_curve(x), 'b', label='Old density curve')
 
 axes.set_xlabel('Altitude (m)')
 axes.set_ylabel('Air density (kg/m^3)')

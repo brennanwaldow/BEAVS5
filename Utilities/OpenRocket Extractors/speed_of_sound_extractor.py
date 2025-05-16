@@ -4,9 +4,9 @@ import numpy as np
 
 dataset = '5.3.10_Brothers'
 launch_altitude = 1380
-# Openrocket sims are in AGL - set this to launch altitude used (Brothers = 1,380m)
+# Openrocket sims are in AGL - set this to launch altitude used (Brothers = 1,380m) to adjust to true altitude
 
-# Altitude [m], gravitational acceleration [m/s^2]
+# Altitude [m], speed of sound [m/s]
 table = [[], []]
 
 ## Reader designed for OpenRocket simulation CSV export, NOT recorded flight telemetry
@@ -43,8 +43,9 @@ for const in constants:
     print(f'    {const},   // P{i}')
     i += 1
 
-# print(f'\nPolynomial lower bound: {table[0][0]} m, at {p(table[0][0])} m/s^2')
-# print(f'Polynomial upper bound: {table[0][-1]} m, at {p(table[0][-1])} m/s^2')
+print(f'\nPolynomial lower bound: {table[0][0]} m, at {p(table[0][0])} m/s')
+print(f'Polynomial upper bound: {table[0][-1]} m, at {p(table[0][-1])} m/s')
+print('\n')
 
 
 # Graph Mach table

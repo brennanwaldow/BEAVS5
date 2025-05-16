@@ -8,7 +8,7 @@ target_apogee = 3048 # [m]
 # Note that while other extractors use a Launch Altitude offset, the lookup table is a function of HEIGHT, not ALTITUDE, so it remains unadjusted
 
 
-# Altitude [m], velocity [m/s]
+# Altitude [m], target velocity [m/s]
 table = [[], []]
 
 ## Reader designed for OpenRocket simulation CSV export, NOT recorded flight telemetry
@@ -48,17 +48,11 @@ print(f'Adjusted apogee: {round(apogee, 2)} m')
 constants = np.polyfit(table[0], table[1], 15)
 p = np.poly1d(constants)
 
+
 # Output
 print('\n--- Polynomial Constants ---\n')
 
-i = 1
-for const in constants:
-    print(f'P{i}: {const}')
-    i += 1
-
 # Print for easy copy-paste into Arduino IDE
-print('\nArray output:\n')
-
 i = 1
 for const in constants:
     print(f'    {const},')
@@ -68,7 +62,8 @@ print(f'\nPolynomial lower bound: {table[0][0]}, at {p(table[0][0])} m/s')
 print(f'Polynomial upper bound: {table[0][-1]}, at {p(table[0][-1])} m/s (just snap to 0 m/s?)')
 
 print(f'\nPolynomial deviation at apogee: {round(p(table[0][-1]), 3)} m/s\n')
-                      
+
+
 # Graph velocity table
 fig, axes = plt.subplots(1, 1)
 
@@ -84,7 +79,7 @@ for alt in table[0]:
 # axes.plot(table[0], vel, label='Old polyfit')
 
 axes.set_xlabel('Altitude (m)')
-axes.set_ylabel('Velocity (m/s)')
+axes.set_ylabel('Target Velocity (m/s)')
 axes.grid(True)
 axes.legend()
 

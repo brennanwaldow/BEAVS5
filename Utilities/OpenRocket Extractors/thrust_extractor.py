@@ -18,14 +18,16 @@ with open('Utilities/Data/' + dataset + '_DataSet.csv', newline='') as csvfile:
         time = float(time) * 1000   # Convert [s] to [ms]
         thrust = float(row[28])
 
-        # Stop at motor cutout
-        if (thrust == 0): break
-
         thrust_table[0].append(time)
         thrust_table[1].append(thrust)
 
+        # Stop at motor cutout after acquiring last datapoint
+        if (thrust == 0): break
+
+
 # Output for paste into Arduino
 
+print('\n')
 print(f'double timeValues[{len(thrust_table[0])}] = ', end='')
 print('{ ', end='')
 
@@ -44,6 +46,7 @@ print('};')
 
 print(f'\n\n\nLower bound: {thrust_table[0][0]} ms')
 print(f'Upper bound: {thrust_table[0][-1]} ms')
+print('\n')
 
 
 # Graph thrust table
