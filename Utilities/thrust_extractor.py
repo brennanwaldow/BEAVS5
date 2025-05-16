@@ -46,7 +46,7 @@ print(f'\n\n\nLower bound: {thrust_table[0][0]} ms')
 print(f'Upper bound: {thrust_table[0][-1]} ms')
 
 
-# Graph velocity table
+# Graph thrust table
 fig, axes = plt.subplots(1, 1)
 
 axes.plot(thrust_table[0], thrust_table[1], label='OpenRocket simulation')

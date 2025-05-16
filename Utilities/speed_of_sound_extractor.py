@@ -47,7 +47,7 @@ for const in constants:
 # print(f'Polynomial upper bound: {table[0][-1]} m, at {p(table[0][-1])} m/s^2')
 
 
-# Graph velocity table
+# Graph Mach table
 fig, axes = plt.subplots(1, 1)
 
 axes.plot(table[0], table[1], label='OpenRocket simulation')

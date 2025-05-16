@@ -84,7 +84,7 @@ for const in constants4:
 print(f'\nPolynomial lower bound: {thrust_table[0][0][0]} ms')
 print(f'Polynomial upper bound: {thrust_table[3][0][-1]} ms')
                       
-# Graph velocity table
+# Graph thrust table
 fig, axes = plt.subplots(1, 1)
 
 axes.plot(thrust_table[0][0], thrust_table[0][1], label='OpenRocket simulation')

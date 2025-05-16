@@ -100,7 +100,7 @@ print(f'Upper bound: Cd = {drag_table[1][-1]} at M{drag_table[0][-1]}')
 # print(f'Polynomial lower bound (apogee): M {drag_table_apogee[0][-1]}, at Cd = {p_apogee(drag_table_apogee[0][-1])}')
 
 
-# Graph velocity table
+# Graph drag table
 fig, axes = plt.subplots(1, 1)
 
 axes.plot(drag_table[0], drag_table[1], label='OpenRocket highspeed simulation')

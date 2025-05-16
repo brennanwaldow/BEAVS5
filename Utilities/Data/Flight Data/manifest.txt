@@ -1,0 +1,3 @@
+Data 39: Sim Flight
+Data 44 / 45: 15-20mph gusts
+Data 46: Static Air

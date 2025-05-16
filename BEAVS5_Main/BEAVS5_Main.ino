@@ -46,13 +46,13 @@ enum { STOWED, ZEROING, MAX_BRAKING, ACTIVE };
     // ACTIVE -- PID loop controls blade deflection
 
 // TODO: SET TO FIELD/ACTIVE BEFORE FLIGHT
-int BEAVS_mode = SIM;
+int BEAVS_mode = FIELD;
 int BEAVS_control = ACTIVE;
 
-enum { SEA_LEVEL = 0, BROTHERS_OR = 1380 };
-float launch_altitude = BROTHERS_OR; // [meters]
+enum { SEA_LEVEL = 0, TESTING = 67, BROTHERS_OR = 1380 };
+float launch_altitude = TESTING; // [meters]
 // TODO: Obtain pressure forecast and calibrate for launch
-float launch_altimeter = inhg_to_hpa(30.49); // [HPa]
+float launch_altimeter = inhg_to_hpa(30.12); // [HPa]
 float target_apogee = feet_to_meters(10000.0); // [meters], AGL
 
 // Simulation only

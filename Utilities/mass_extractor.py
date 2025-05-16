@@ -52,7 +52,7 @@ for const in constants:
 print(f'\nPolynomial lower bound: {table[1][0]} kg')
 print(f'Polynomial upper bound at t = {table[0][-1]} ms: {table[1][-1]} kg')
                       
-# Graph velocity table
+# Graph mass table
 fig, axes = plt.subplots(1, 1)
 
 axes.plot(table[0], table[1], label='OpenRocket simulation')
