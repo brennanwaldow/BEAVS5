@@ -124,6 +124,13 @@ float altitude = launch_altitude;  // [meters]
 float height = 0;                  // [meters]
 double velocity = 0;               // [m/s]
 double acceleration = 0;           // [m/s^2]
+
+double roll_angle = 0;             // [rad]
+double pitch_angle = 0;            // [rad]
+double roll_velocity = 0;          // [rad/s]
+double pitch_velocity = 0;         // [rad/s]
+
+
 long clock_time = 0;               // [ms]
 long curr_time = 0;                // [micro s]
 long pid_clock_time = 0;           // [ms]
@@ -443,22 +450,37 @@ void collect_telemetry() {
     clock_time = micros();
 
     // BNO055
-    sensors_event_t accelerometer;
-    bno.getEvent(&accelerometer, Adafruit_BNO055::VECTOR_ACCELEROMETER);
+    sensors_event_t accelerometer, gyroscope;
+    bno.getEvent(&accelerometer, Adafruit_BNO055::VECTOR_LINEARACCEL);
+    bno.getEvent(&gyroscope, Adafruit_BNO055::VECTOR_GYROSCOPE);
 
     // TODO: 3-axis -> magnitude?
-    sensors_event_t* event = &accelerometer;
-    event->type == SENSOR_TYPE_ACCELEROMETER;
-    acceleration = -(event->acceleration.z) + gravity(altitude);
+    sensors_event_t* accelerometer_event = &accelerometer;
+    accelerometer_event->type == SENSOR_TYPE_LINEAR_ACCELERATION;
+    acceleration = accelerometer_event->acceleration.z;
 
-    // Serial.print(altitude);
+    // sensors_event_t* gyro_event = &gyroscope;
+    // gyro_event->type == SENSOR_TYPE_ORIENTATION;
+
+    // Serial.print(gyro_event->orientation.x);
     // Serial.print(" ");
-    // Serial.print(prev_altitude);
+    // Serial.print(gyro_event->orientation.y);
     // Serial.print(" ");
-    // Serial.print(dt);
+    // Serial.print(gyro_event->orientation.z);
     // Serial.print(" ");
-    // Serial.println(velocity);
-    delay(50);
+
+    // float delta_roll = (dt * )
+
+    Serial.print(altitude);
+    Serial.print(" ");
+    Serial.print(prev_altitude);
+    Serial.print(" ");
+    Serial.print(dt);
+    Serial.print(" ");
+    Serial.print(acceleration);
+    Serial.print(" ");
+    Serial.println(velocity);
+    delay(20);
   }
 }
 
@@ -468,6 +490,11 @@ void calculate_telemetry() {
     max_height = height;
     max_height_clock = millis();
   }
+
+  // Get mass
+  // Acceleration -> Force
+  // Subtract gravity
+  // Get approximate total drag force
 }
 
 void tick_PID() {
