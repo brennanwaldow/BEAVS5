@@ -46,7 +46,7 @@ enum { STOWED, ZEROING, MAX_BRAKING, ACTIVE };
     // ACTIVE -- PID loop controls blade deflection
 
 // TODO: SET TO FIELD/ACTIVE BEFORE FLIGHT
-int BEAVS_mode = FIELD;
+int BEAVS_mode = SIM;
 int BEAVS_control = ACTIVE;
 
 enum { SEA_LEVEL = 0, TESTING = 67, BROTHERS_OR = 1380 };
@@ -130,10 +130,14 @@ double pitch_angle = 0;            // [rad]
 double roll_velocity = 0;          // [rad/s]
 double pitch_velocity = 0;         // [rad/s]
 
+float drag_force_approx = 0;       // [N]
+float drag_force_expected = 0;     // [N]
+
 
 long clock_time = 0;               // [ms]
 long curr_time = 0;                // [micro s]
 long pid_clock_time = 0;           // [ms]
+long launch_timestamp = 0;         // [ms]
 
 float max_height = 0;              // [meters]
 long max_height_clock = 0;         // [ms]
@@ -203,6 +207,8 @@ void setup() {
       telemetry_filename = "Data/data_" + String(log_index) + ".csv";
 
       log("Initiating logger with index " + String(log_index) + ".");
+
+      write_telemetry_headers();
       break;
     }
 
@@ -378,8 +384,9 @@ void disarm() {
 }
 
 void launch() {
-  // ENGINE IGNITION: Arm BEAVS monitoring for cutoff
+  // ENGINE IGNITION: Arm BEAVS monitoring for motor cutoff
   flight_phase = FLIGHT;
+  launch_timestamp = millis();
   log("Motor ignition detected.");
 }
 
@@ -425,7 +432,25 @@ void write_telemetry() {
                           + velocity + ","
                           + acceleration + ","
                           + commanded_angle + ","
-                          + flight_phase;
+                          + flight_phase + ","
+                          + drag_force_approx + ","
+                          + drag_force_expected;
+  telemetry_file.println(telemetry_string);
+  telemetry_file.close();
+}
+
+void write_telemetry_headers() {
+  telemetry_file = SD.open(telemetry_filename, O_CREAT | O_WRITE | O_APPEND);
+  String timestamp = String(millis() / 1000.0, 4);
+  String telemetry_string = "Time [s]" + ","
+                          + "Altitude [m]" + ","
+                          + "Height [m AGL]" + ","
+                          + "Velocity [m/s]" + ","
+                          + "Acceleration [m/s^2]" + ","
+                          + "Commanded Angle [deg]" + ","
+                          + "Flight Phase [int enum]" + ","
+                          + "Approximate Drag Force [N]" + ","
+                          + "Expected Drag Force [N]";
   telemetry_file.println(telemetry_string);
   telemetry_file.close();
 }
@@ -491,10 +516,27 @@ void calculate_telemetry() {
     max_height_clock = millis();
   }
 
-  // Get mass
-  // Acceleration -> Force
-  // Subtract gravity
-  // Get approximate total drag force
+  // Calculate approximate drag force experienced
+  float mass_approx = get_mass(millis() - launch_timestamp);
+  float drag_acceleration_approx = acceleration - (-gravity(altitude));
+  drag_force_approx = -(drag_acceleration_approx * mass_approx);
+
+  // Calculate expected drag force due to BEAVS
+
+  // TODO: Merge this with get_beavs_drag function or something idk
+  float A_ref = 0.02043171233;
+  float virtual_deflection = max((virtual_angle - 8.86) / (150 - 8.86), 0);
+  float A_beavs = ((feet_to_meters(1.632 / 12) * feet_to_meters(2.490 / 12)) * 2) * virtual_deflection;
+  
+  float speed_of_sound = (-0.003938999995558203 * altitude) + 340.3888999387908;
+  float Mach = abs(velocity) / speed_of_sound;
+  float Cd_rocket = get_Cd(Mach);
+  float air_density = (-6.866808372788853e-14 * pow(altitude, 3) + 4.309128823975302e-09 * pow(altitude, 2) + (-0.00011761140418837493 * altitude) + 1.2252514803412429);
+
+  float Cd_beavs = 4.8 * (sqrt(A_beavs / A_ref)) * blade_modulation;
+  float Cd = Cd_rocket + (Cd_beavs * (A_beavs / A_ref));
+
+  drag_force_expected = abs(0.5 * air_density * (velocity * velocity) * Cd * A_ref);
 }
 
 void tick_PID() {
@@ -687,6 +729,10 @@ void get_trolled_idiot() {
   Serial.print(" ");
   Serial.print(Fd);
   Serial.print(" ");
+  Serial.print(drag_force_approx);
+  Serial.print(" ");
+  Serial.print(drag_force_expected);
+  Serial.print(" ");
   Serial.print(get_Fd_BEAVS(velocity, Cd_beavs, A_beavs, air_density));
   Serial.print(" ");
   Serial.print(get_Fd_BEAVS(velocity, 4.8 * (sqrt(((feet_to_meters(1.632 / 12) * feet_to_meters(2.490 / 12)) * 2) / A_ref)), ((feet_to_meters(1.632 / 12) * feet_to_meters(2.490 / 12)) * 2), air_density));
@@ -811,111 +857,6 @@ float get_Cd(float mach) {
   return Cd;
 }
 
-float get_Cd_old(float mach) {
-  double result = 0;
-
-  if (mach < 0.101) {
-    // Plateau drag curve at low speed on launch
-    if (height < 150) return 0.5199427718028657;
-
-    // Apogee regime:
-
-    // Lower bound
-    if (mach < 0.015) return 0.6342688318590177;
-
-    // These constants are obtained from ../Utilities/drag_curve.py using the OpenRocket simulation
-    double consts[] = {
-      2.976154010485763e+21,    // P1
-      -2.534189908828422e+21,    // P2
-      9.877838221515783e+20,    // P3
-      -2.3353049157933597e+20,    // P4
-      3.740567546682588e+19,    // P5
-      -4.294394621632756e+18,    // P6
-      3.6458490959624083e+17,    // P7
-      -2.3276609481967676e+16,    // P8
-      1125221220802627.8,    // P9
-      -41130541092701.6,    // P10
-      1126053343781.6812,    // P11
-      -22646101417.727882,    // P12
-      323460418.6356909,    // P13
-      -3094228.032334539,    // P14
-      17702.196587233087,    // P15
-      -44.94538426800864,    // P16
-    };
-
-    int poly_order = 15;
-
-    // pain
-    for (int i = 0; i < poly_order + 1; i++) {
-      result = result + ((double) pow(mach, poly_order - i) * consts[i]);
-    }
-  }
-
-  // Polynomial upper bounds
-  if (mach > 1.195) return 0.700364550575614;
-
-  // Subsonic regime:
-  if (mach > 0.1 && mach < 0.9) {
-    // These constants are obtained from ../Utilities/drag_curve.py using the OpenRocket simulation
-    double consts[] = {
-      -765896.3093507506,    // P1
-      5771470.938647585,    // P2
-      -19822242.621078823,    // P3
-      41094866.77729983,    // P4
-      -57414324.17904674,    // P5
-      57156007.22941694,    // P6
-      -41802679.40388279,    // P7
-      22826976.117353175,    // P8
-      -9363992.612196557,    // P9
-      2879638.728590026,    // P10
-      -657088.902049036,    // P11
-      109040.84535222364,    // P12
-      -12714.942843019784,    // P13
-      982.1595443421627,    // P14
-      -44.859904633784645,    // P15
-      1.4312088662195603,    // P16
-    };
-
-    int poly_order = 15;
-
-    // pain
-    for (int i = 0; i < poly_order + 1; i++) {
-      result = result + ((double) pow(mach, poly_order - i) * consts[i]);
-    }
-  }
-
-  // Transonic regime:
-  if (mach > 0.9) {
-    double consts[] = {
-      -4212299.423961634,    // P1
-      26596664.36097106,    // P2
-      -58245981.30264048,    // P3
-      32866275.46387014,    // P4
-      50272901.33583769,    // P5
-      -40261311.34963774,    // P6
-      -65942394.21483676,    // P7
-      33585676.278988615,    // P8
-      91822538.79022847,    // P9
-      -20546887.72375796,    // P10
-      -121765757.90060957,    // P11
-      29401038.569401,    // P12
-      155074584.83816013,    // P13
-      -167758356.77176008,    // P14
-      70082127.70299605,    // P15
-      -10968817.925096473,    // P16
-    };
-
-    int poly_order = 15;
-
-    // pain
-    for (int i = 0; i < poly_order + 1; i++) {
-      result = result + ((double) pow(mach, poly_order - i) * consts[i]);
-    }
-  }
-
-  return (float) result;
-}
-
 float get_thrust(float time) {
   // Range of validity
   if (time < 0) return 0;
@@ -943,126 +884,6 @@ float get_thrust(float time) {
   float thrust = Interpolation::Linear(timeValues, thrustValues, 138, time, true);
 
   return thrust;
-}
-
-float get_thrust_old(float time) { // [ms]
-  // Range of polynomial validity
-  if (time < 0) return 0;
-  if (time > 4505) return 0;
-
-  double result = 0;
-
-  if (time < 37) {
-    // These constants are obtained from ../Utilities/thrust_extractor.py using the OpenRocket simulation
-    double consts[] = {
-      -4.418372606013904e-13,   // P1
-      -1.1652407369607583e-11,   // P2
-      -2.7769362913834166e-10,   // P3
-      -5.1226655302972864e-09,   // P4
-      -1.2025207751754383e-08,   // P5
-      5.745404750093319e-06,   // P6
-      0.00042155390307917076,   // P7
-      0.021542269846367295,   // P8
-      0.8540112017390363,   // P9
-      21.638784656324066,   // P10
-      11.801775916630444,   // P11
-    };
-
-    int poly_order = 10;
-
-    // pain
-    for (int i = 0; i < poly_order + 1; i++) {
-      result = result + ((double) pow(time, poly_order - i) * consts[i]);
-    }
-  } else if (time < 3247) {
-    // These constants are obtained from ../Utilities/thrust_extractor.py using the OpenRocket simulation
-    double consts[] = {
-      -4.683266251558473e-60,   // P1
-      1.1787016408257099e-55,   // P2
-      -1.3053001934264523e-51,   // P3
-      8.195452116379321e-48,   // P4
-      -3.0473216375816937e-44,   // P5
-      5.53373569555978e-41,   // P6
-      5.507473272370591e-38,   // P7
-      -6.739586893490672e-34,   // P8
-      2.2101582922098247e-30,   // P9
-      -4.4402065806942574e-27,   // P10
-      6.143566143807555e-24,   // P11
-      -6.05278350217028e-21,   // P12
-      4.284737485017909e-18,   // P13
-      -2.194460129948485e-15,   // P14
-      8.375731259447085e-13,   // P15
-      -2.565166513613027e-10,   // P16
-      6.694478794385455e-08,   // P17
-      -1.370435689909412e-05,   // P18
-      0.0017398110068922645,   // P19
-      0.5265652484823354,   // P20
-      2019.1472070293255,   // P21
-    };
-
-    int poly_order = 20;
-
-    // pain
-    for (int i = 0; i < poly_order + 1; i++) {
-      result = result + ((double) pow(time, poly_order - i) * consts[i]);
-    }
-  } else if (time < 3790) {
-    // These constants are obtained from ../Utilities/thrust_extractor.py using the OpenRocket simulation
-    double consts[] = {
-      2.2999274937804016e-25,   // P1
-      -5.004400272600633e-21,   // P2
-      4.114562056363646e-17,   // P3
-      -1.3098847515170642e-13,   // P4
-      -1.2894400892907893e-10,   // P5
-      1.7959909077218326e-06,   // P6
-      -0.0009872286967884773,   // P7
-      -22.647280015673868,   // P8
-      83561.76803758714,   // P9
-      -123864165.02678245,   // P10
-      69989246965.8426,   // P11
-    };
-
-    int poly_order = 10;
-
-    // pain
-    for (int i = 0; i < poly_order + 1; i++) {
-      result = result + ((double) pow(time, poly_order - i) * consts[i]);
-    }
-  } else {
-    // These constants are obtained from ../Utilities/thrust_extractor.py using the OpenRocket simulation
-    double consts[] = {
-      -1.2346768260727624e-60,   // P1
-      2.1297977209016264e-56,   // P2
-      -8.929946035918273e-53,   // P3
-      -2.3373387683005864e-49,   // P4
-      1.0923734713282396e-45,   // P5
-      6.600229944588467e-42,   // P6
-      2.0389200818999012e-39,   // P7
-      -1.1089382926201572e-34,   // P8
-      -4.794148791597963e-31,   // P9
-      6.958813782877615e-29,   // P10
-      9.370597421141463e-24,   // P11
-      3.8796179911512314e-20,   // P12
-      -1.8128133922091875e-17,   // P13
-      -8.357144568735814e-13,   // P14
-      -2.823117715676497e-09,   // P15
-      7.268801386890557e-06,   // P16
-      0.07902047087140077,   // P17
-      -5.076544891217461,   // P18
-      -1792317.8675069313,   // P19
-      5199715706.81694,   // P20
-      -4498769262459.649,   // P21
-    };
-
-    int poly_order = 20;
-
-    // pain
-    for (int i = 0; i < poly_order + 1; i++) {
-      result = result + ((double) pow(time, poly_order - i) * consts[i]);
-    }
-  }
-
-  return (float) result;
 }
 
 float get_mass(float time) { // [ms]

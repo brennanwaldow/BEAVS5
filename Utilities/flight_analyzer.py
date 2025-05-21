@@ -20,7 +20,7 @@ with open('Utilities/Data/Flight Data/data_' + index + '.csv', newline='') as cs
     for row in reader:
         # Skip first two data rows to avoid dodgy data as it calibrates
         skip += 1
-        if (skip < 3): continue
+        if (skip < 4): continue
 
         time = float(row[0])
         altitude = float(row[1])
