@@ -442,15 +442,15 @@ void write_telemetry() {
 void write_telemetry_headers() {
   telemetry_file = SD.open(telemetry_filename, O_CREAT | O_WRITE | O_APPEND);
   String timestamp = String(millis() / 1000.0, 4);
-  String telemetry_string = "Time [s]" + ","
-                          + "Altitude [m]" + ","
-                          + "Height [m AGL]" + ","
-                          + "Velocity [m/s]" + ","
-                          + "Acceleration [m/s^2]" + ","
-                          + "Commanded Angle [deg]" + ","
-                          + "Flight Phase [int enum]" + ","
-                          + "Approximate Drag Force [N]" + ","
-                          + "Expected Drag Force [N]";
+  String telemetry_string = String("# Time [s],")
+                          + String("# Altitude [m],")
+                          + String("# Height [m AGL],")
+                          + String("# Velocity [m/s],")
+                          + String("# Acceleration [m/s^2],")
+                          + String("# Commanded Angle [deg],")
+                          + String("# Flight Phase [int enum],")
+                          + String("# Approximate Drag Force [N],")
+                          + String("# Expected Drag Force [N]");
   telemetry_file.println(telemetry_string);
   telemetry_file.close();
 }
