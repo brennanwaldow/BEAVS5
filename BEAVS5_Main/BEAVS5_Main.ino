@@ -601,6 +601,7 @@ void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full ex
 }
 
 // Velocity lookup table
+// ONLY VALID for launch site: BROTHERS
 float velocity_lookup() {
   // Range of polynomial validity: Burnout to apogee
   if (height < 776.2875822000002) return 283.67155136563815;

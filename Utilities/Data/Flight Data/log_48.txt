@@ -1,0 +1,7 @@
+[4.58s] Initiating logger with index 48.
+[4.62s] Startup complete.
+[4.72s] Safety pin removed. BEAVS arming.
+[12.99s] Motor ignition detected.
+[13.13s] Coast phase entered, beginning deployment.
+[13.39s] Apogee reached.
+[13.43s] Altitude achieved: -2.63 m AGL   //   -8.62 ft AGL
