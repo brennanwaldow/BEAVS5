@@ -138,6 +138,7 @@ long clock_time = 0;               // [ms]
 long curr_time = 0;                // [micro s]
 long pid_clock_time = 0;           // [ms]
 long launch_timestamp = 0;         // [ms]
+long apogee_timestamp = 0;         // [ms]
 
 float max_height = 0;              // [meters]
 long max_height_clock = 0;         // [ms]
@@ -326,8 +327,11 @@ void overshoot_loop() {
 }
 
 void descend_loop() {
-  // collect_telemetry();
-  // calculate_telemetry();
+  if ((millis() - apogee_timestamp) < 300000) {
+    collect_telemetry();
+    calculate_telemetry();
+    write_telemetry();
+  }
 }
 
 
@@ -380,6 +384,7 @@ void arm() {
 void disarm() {
   // SAFETY PIN REINSERTED: Return to Disarmed state
   flight_phase = PREFLIGHT;
+  
   log("Safety pin reinserted. Disarming.");
 }
 
@@ -387,12 +392,14 @@ void launch() {
   // ENGINE IGNITION: Arm BEAVS monitoring for motor cutoff
   flight_phase = FLIGHT;
   launch_timestamp = millis();
+
   log("Motor ignition detected.");
 }
 
 void coast() {
   // ENGINE CUTOFF: Deploy BEAVS
   flight_phase = COAST;
+  
   log("Coast phase entered, beginning deployment.");
 }
 
@@ -400,6 +407,7 @@ void overshoot() {
   // APOGEE OVERSHOT: Last full extension regime on airbrake to minimize further overshoot
   flight_phase = OVERSHOOT;
   if (BEAVS_control == ACTIVE) command_deflection(1);
+
   log("Target apogee overshot! Extending full braking.");
 }
 
@@ -407,8 +415,11 @@ void descend() {
   // APOGEE REACHED: BEAVS safing, PID shutdown
   flight_phase = DESCENT;
   command_deflection(0);
+
   log("Apogee reached.");
   log("Altitude achieved: " + String(height, 2) + " m AGL   //   " + String(meters_to_feet(height), 2) + " ft AGL");
+
+  apogee_timestamp = millis();
 }
 
 
