@@ -46,7 +46,7 @@ enum { STOWED, ZEROING, MAX_BRAKING, ACTIVE };
     // ACTIVE -- PID loop controls blade deflection
 
 // TODO: SET TO FIELD/ACTIVE BEFORE FLIGHT
-int BEAVS_mode = SIM;
+int BEAVS_mode = FIELD;
 int BEAVS_control = ACTIVE;
 
 enum { SEA_LEVEL = 0, TESTING = 67, BROTHERS_OR = 1380 };
@@ -125,10 +125,8 @@ float height = 0;                  // [meters]
 double velocity = 0;               // [m/s]
 double acceleration = 0;           // [m/s^2]
 
-double roll_angle = 0;             // [rad]
-double pitch_angle = 0;            // [rad]
-double roll_velocity = 0;          // [rad/s]
-double pitch_velocity = 0;         // [rad/s]
+double roll_angle = 0;             // [deg]
+double relative_roll_angle = 0;    // [deg]
 
 float drag_force_approx = 0;       // [N]
 float drag_force_expected = 0;     // [N]
@@ -447,7 +445,9 @@ void write_telemetry() {
                           + drag_force_approx + ","
                           + drag_force_expected + ","
                           + target_velocity + ","
-                          + error1;
+                          + error1 + ","
+                          + roll_angle + ","
+                          + relative_roll_angle;
   telemetry_file.println(telemetry_string);
   telemetry_file.close();
 }
@@ -465,7 +465,9 @@ void write_telemetry_headers() {
                           + String("# Approximate Drag Force [N],")
                           + String("# Expected Drag Force [N],")
                           + String("# Target Velocity [m/s],")
-                          + String("# Velocity Error [m/s]");
+                          + String("# Velocity Error [m/s],")
+                          + String("# Roll [deg]")
+                          + String("# Relative Roll [deg]");
   telemetry_file.println(telemetry_string);
   telemetry_file.close();
 }
@@ -492,24 +494,38 @@ void collect_telemetry() {
     // BNO055
     sensors_event_t accelerometer, gyroscope;
     bno.getEvent(&accelerometer, Adafruit_BNO055::VECTOR_LINEARACCEL);
-    bno.getEvent(&gyroscope, Adafruit_BNO055::VECTOR_GYROSCOPE);
+    bno.getEvent(&gyroscope, Adafruit_BNO055::VECTOR_EULER);
 
     // TODO: 3-axis -> magnitude?
     sensors_event_t* accelerometer_event = &accelerometer;
     accelerometer_event->type == SENSOR_TYPE_LINEAR_ACCELERATION;
     acceleration = accelerometer_event->acceleration.z;
 
-    // sensors_event_t* gyro_event = &gyroscope;
-    // gyro_event->type == SENSOR_TYPE_ORIENTATION;
+    sensors_event_t* gyro_event = &gyroscope;
+    gyro_event->type == SENSOR_TYPE_ORIENTATION;
 
-    // Serial.print(gyro_event->orientation.x);
-    // Serial.print(" ");
+    float new_roll = gyro_event->orientation.x;
+
+    float delta_roll = 0;
+
+    if (new_roll < 20 && roll_angle > 340) {
+      relative_roll_angle = relative_roll_angle + (360 - roll_angle) + new_roll;
+    } else if (new_roll > 340 && roll_angle < 20) {
+      relative_roll_angle = relative_roll_angle - roll_angle - (360 - new_roll);
+    } else {
+      relative_roll_angle = relative_roll_angle + (new_roll - roll_angle);
+    }
+
+    roll_angle = new_roll;
+
+    Serial.print(roll_angle);
+    Serial.print(" ");
+    Serial.print(relative_roll_angle);
+    Serial.print(" ");
     // Serial.print(gyro_event->orientation.y);
     // Serial.print(" ");
     // Serial.print(gyro_event->orientation.z);
     // Serial.print(" ");
-
-    // float delta_roll = (dt * )
 
     Serial.print(altitude);
     Serial.print(" ");
@@ -944,6 +960,10 @@ float get_Fd_BEAVS(float velocity, float Cd_BEAVS, float A_BEAVS, float air_dens
 
 float degrees_to_radians(float degrees) {
   return (degrees * 3.1415926535897932384626433832795) / 180;
+}
+
+float radians_to_degrees(float radians) {
+  return (radians / 3.1415926535897932384626433832795) * 180;
 }
 
 

@@ -130,7 +130,7 @@ fig = plt.figure()
 ax = fig.add_subplot(projection='3d')
 
 X, Y = np.meshgrid(x, y)
-ax.plot_surface(X, Y, get_BEAVS_drag(X, Y), cmap = 'plasma')
+ax.plot_surface(X, Y, get_BEAVS_drag(X, Y), cmap='plasma', alpha=0.8)
 
 for deflection_set in cfd_values:
     deflection = deflection_set[0]
@@ -143,8 +143,6 @@ for deflection_set in cfd_values:
         mach = ms_to_mach(velocity)
 
         plot_point(ax, mach, deflection, drag)
-
-print(flight_trace[1])
 
 ax.plot(flight_trace[0], flight_trace[1], flight_trace[2], color='orangered')
 
