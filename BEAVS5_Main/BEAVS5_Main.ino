@@ -465,7 +465,7 @@ void write_telemetry_headers() {
                           + String("# Approximate Drag Force [N],")
                           + String("# Expected Drag Force [N],")
                           + String("# Target Velocity [m/s],")
-                          + String("# Velocity Error [m/s");
+                          + String("# Velocity Error [m/s]");
   telemetry_file.println(telemetry_string);
   telemetry_file.close();
 }

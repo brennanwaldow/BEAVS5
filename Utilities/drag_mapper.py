@@ -5,6 +5,9 @@ from matplotlib.patches import Circle, Ellipse
 import numpy as np
 
 dataset = '5.3.10_Brothers'
+flight_comparison = '53' # Set to 'none' to ignore
+
+flight_trace = [[], [], []]
 
 # Mach [M], drag coefficient [Cd]
 drag_table = [[], []]
@@ -25,6 +28,14 @@ cfd_values = [
         [100, 1000],
     ]]
 ]
+
+# Mach to m/s
+def mach_to_ms(mach):
+    return mach * 343.2   # Sea level
+
+# m/s to Mach
+def ms_to_mach(velocity):
+    return velocity / 343.2   # Sea level
 
 ## Reader designed for OpenRocket simulation CSV export, NOT recorded flight telemetry
 with open('Utilities/Data/' + dataset + '_HighSpeed_DataSet.csv', newline='') as csvfile:
@@ -52,9 +63,34 @@ with open('Utilities/Data/' + dataset + '_HighSpeed_DataSet.csv', newline='') as
             drag_table[0].append(mach)
             drag_table[1].append(drag_coeff)
 
-
 drag_table[0].reverse()
 drag_table[1].reverse()
+
+
+if flight_comparison != 'none':
+    with open('Utilities/Data/Flight Data/data_' + flight_comparison + '.csv', newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            time = row[0]
+            # Break first row
+            if (time == '# Time [s]'): continue
+
+            time = float(time)
+
+            flight_phase = int(row[6])
+
+            # Only track coast
+            if (flight_phase != 3): continue
+
+            velocity = float(row[3])
+            commanded_deflection_angle = float(row[5])
+            drag_force = float(row[7])
+
+            deflection = (commanded_deflection_angle - 8.86) / (150 - 8.86)
+
+            flight_trace[0].append(ms_to_mach(velocity))
+            flight_trace[1].append(deflection)
+            flight_trace[2].append(drag_force)
 
 
 x = np.linspace(drag_table[0][-1], drag_table[0][0], 100)
@@ -63,14 +99,6 @@ y = np.linspace(0, 1, 100)
 cd_rocket = []
 for mach in x:
     cd_rocket.append(np.interp(mach, drag_table[0], drag_table[1]))
-
-# Mach to m/s
-def mach_to_ms(mach):
-    return mach * 343.2   # Sea level
-
-# m/s to Mach
-def ms_to_mach(velocity):
-    return velocity / 343.2   # Sea level
 
 # Drag function
 def get_BEAVS_drag(mach, deflection):
@@ -115,6 +143,10 @@ for deflection_set in cfd_values:
         mach = ms_to_mach(velocity)
 
         plot_point(ax, mach, deflection, drag)
+
+print(flight_trace[1])
+
+ax.plot(flight_trace[0], flight_trace[1], flight_trace[2], color='orangered')
 
 ax.set_xlabel('Mach')
 ax.set_ylabel('Deflection')
