@@ -4,3 +4,4 @@ Data 46: Static Air
 Data 47: Going up and down again
 Data 48: Going up and down again but more fast weee
 Data 49: Sim flight with added drag logging
+Data 51: Sim flight with added target velocity logging

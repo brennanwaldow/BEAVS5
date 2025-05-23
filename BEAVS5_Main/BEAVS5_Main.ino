@@ -50,7 +50,7 @@ int BEAVS_mode = SIM;
 int BEAVS_control = ACTIVE;
 
 enum { SEA_LEVEL = 0, TESTING = 67, BROTHERS_OR = 1380 };
-float launch_altitude = TESTING; // [meters]
+float launch_altitude = BROTHERS_OR; // [meters]
 // TODO: Obtain pressure forecast and calibrate for launch
 float launch_altimeter = inhg_to_hpa(30.12); // [HPa]
 float target_apogee = feet_to_meters(10000.0); // [meters], AGL
@@ -434,7 +434,9 @@ void write_telemetry() {
                           + commanded_angle + ","
                           + flight_phase + ","
                           + drag_force_approx + ","
-                          + drag_force_expected;
+                          + drag_force_expected + ","
+                          + target_velocity + ","
+                          + error1;
   telemetry_file.println(telemetry_string);
   telemetry_file.close();
 }
@@ -450,7 +452,9 @@ void write_telemetry_headers() {
                           + String("# Commanded Angle [deg],")
                           + String("# Flight Phase [int enum],")
                           + String("# Approximate Drag Force [N],")
-                          + String("# Expected Drag Force [N]");
+                          + String("# Expected Drag Force [N],")
+                          + String("# Target Velocity [m/s],")
+                          + String("# Velocity Error [m/s");
   telemetry_file.println(telemetry_string);
   telemetry_file.close();
 }
