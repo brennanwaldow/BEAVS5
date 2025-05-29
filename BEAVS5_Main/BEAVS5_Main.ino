@@ -127,6 +127,9 @@ double acceleration = 0;           // [m/s^2]
 
 double roll_angle = 0;             // [deg]
 double relative_roll_angle = 0;    // [deg]
+double pitch_angle = 0;            // [deg]
+double pitch_angle_x = 0;          // [deg]
+double pitch_angle_y = 0;          // [deg]
 
 float drag_force_approx = 0;       // [N]
 float drag_force_expected = 0;     // [N]
@@ -137,6 +140,7 @@ long curr_time = 0;                // [micro s]
 long pid_clock_time = 0;           // [ms]
 long launch_timestamp = 0;         // [ms]
 long apogee_timestamp = 0;         // [ms]
+bool log_terminated = false;       // [bool]
 
 float max_height = 0;              // [meters]
 long max_height_clock = 0;         // [ms]
@@ -325,10 +329,14 @@ void overshoot_loop() {
 }
 
 void descend_loop() {
+  // Continue logging for five minutes after apogee
   if ((millis() - apogee_timestamp) < 300000) {
     collect_telemetry();
     calculate_telemetry();
     write_telemetry();
+  } else if (log_terminated == false) {
+    log("Five minutes after apogee. Logging terminated.");
+    log_terminated = true;
   }
 }
 
@@ -447,7 +455,10 @@ void write_telemetry() {
                           + target_velocity + ","
                           + error1 + ","
                           + roll_angle + ","
-                          + relative_roll_angle;
+                          + relative_roll_angle + ","
+                          + pitch_angle_x + ","
+                          + pitch_angle_y + ","
+                          + pitch_angle;
   telemetry_file.println(telemetry_string);
   telemetry_file.close();
 }
@@ -466,8 +477,11 @@ void write_telemetry_headers() {
                           + String("# Expected Drag Force [N],")
                           + String("# Target Velocity [m/s],")
                           + String("# Velocity Error [m/s],")
-                          + String("# Roll [deg]")
-                          + String("# Relative Roll [deg]");
+                          + String("# Roll [deg],")
+                          + String("# Relative Roll [deg],")
+                          + String("# Pitch (x) [deg],")
+                          + String("# Pitch (y) [deg],")
+                          + String("# Pitch (from vertical) [deg]");
   telemetry_file.println(telemetry_string);
   telemetry_file.close();
 }
@@ -506,8 +520,6 @@ void collect_telemetry() {
 
     float new_roll = gyro_event->orientation.x;
 
-    float delta_roll = 0;
-
     if (new_roll < 20 && roll_angle > 340) {
       relative_roll_angle = relative_roll_angle + (360 - roll_angle) + new_roll;
     } else if (new_roll > 340 && roll_angle < 20) {
@@ -518,14 +530,19 @@ void collect_telemetry() {
 
     roll_angle = new_roll;
 
+    pitch_angle_x = gyro_event->orientation.y;
+    pitch_angle_y = gyro_event->orientation.z;
+
     Serial.print(roll_angle);
     Serial.print(" ");
     Serial.print(relative_roll_angle);
     Serial.print(" ");
-    // Serial.print(gyro_event->orientation.y);
-    // Serial.print(" ");
-    // Serial.print(gyro_event->orientation.z);
-    // Serial.print(" ");
+    Serial.print(pitch_angle_x);
+    Serial.print(" ");
+    Serial.print(pitch_angle_y);
+    Serial.print(" ");
+    Serial.print(pitch_angle);
+    Serial.print(" ");
 
     Serial.print(altitude);
     Serial.print(" ");
@@ -536,6 +553,7 @@ void collect_telemetry() {
     Serial.print(acceleration);
     Serial.print(" ");
     Serial.println(velocity);
+    // TODO: Break delay into main loop clock!
     delay(20);
   }
 }
@@ -568,6 +586,25 @@ void calculate_telemetry() {
   float Cd = Cd_rocket + (Cd_beavs * (A_beavs / A_ref));
 
   drag_force_expected = abs(0.5 * air_density * (velocity * velocity) * Cd * A_ref);
+
+  // Convert two-axis pitch into single-axis pitch
+  float a1 = degrees_to_radians(pitch_angle_x);
+  float a2 = degrees_to_radians(pitch_angle_y);
+
+  float h1 = cos(a1);
+  float l1 = sin(a1);
+
+  float l2 = h1 * sin(a2);
+  float h = h1 * cos(a2);
+
+  float l = sqrt((l1 * l1) + (l2 * l2));
+
+  // TODO EMERGENCY: do something to make sure i dont divide by zero during flight lmfao
+  pitch_angle = abs(radians_to_degrees(atan(l / h)));
+
+  if ((abs(pitch_angle_x) > 90) || (abs(pitch_angle_y) > 90)) {
+    pitch_angle = 180 - pitch_angle;
+  }
 }
 
 void tick_PID() {
