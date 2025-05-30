@@ -159,6 +159,8 @@ int flight_phase = PREFLIGHT;
 
 
 // -----   Power-On Boot   -----
+
+// Core 1
 void setup() {
   Serial.begin(115200);
   // Wait for serial to initialize
@@ -222,7 +224,14 @@ void setup() {
   command_deflection(-1);
 }
 
+// Core 2
+void setup1() {
+
+}
+
 // -----   Control Loop   -----
+
+// Core 1
 void loop() {
   curr_time = micros();
 
@@ -235,22 +244,22 @@ void loop() {
 
   switch(flight_phase) {
     case PREFLIGHT:
-      preflight_loop();
+      preflight_loop(1);
       break;
     case ARMED:
-      ready_loop();
+      ready_loop(1);
       break;
     case FLIGHT:
-      flight_loop();
+      flight_loop(1);
       break;
     case OVERSHOOT:
-      overshoot_loop();
+      overshoot_loop(1);
       break;
     case COAST:
-      coast_loop();
+      coast_loop(1);
       break;
     case DESCENT:
-      descend_loop();
+      descend_loop(1);
       break;
   }
 
@@ -259,84 +268,134 @@ void loop() {
   delay(5);
 }
 
-
-void preflight_loop() {
-  // digitalWrite(LED_BUILTIN, HIGH);
-  // delay(500);
-  // digitalWrite(LED_BUILTIN, LOW);
-  // delay(1000);
-
-  if (millis() > 3000) arm();
-
-  collect_telemetry();
-  calculate_telemetry();
-  // TODO: disable telemetry write on ground for final flight
-  write_telemetry();
-}
-
-void ready_loop() {
-  // digitalWrite(LED_BUILTIN, HIGH);
-
-  // delay(100);
-  // digitalWrite(LED_BUILTIN, LOW);
-  // delay(100);
-
-  collect_telemetry();
-  calculate_telemetry();
-  // TODO: disable telemetry write on ground for final flight
-  write_telemetry();
-
-  if (acceleration > 10) launch();
-}
-
-void flight_loop() {
-  collect_telemetry();
-  calculate_telemetry();
-  write_telemetry();
-
-  if (acceleration < 5) coast();
-}
-
-void coast_loop() {
-  collect_telemetry();
-  calculate_telemetry();
-  write_telemetry();
-
-  if (BEAVS_control == ACTIVE) {
-    tick_PID();
-
-    command_deflection(u);
+// Core 2
+void loop1() {
+  switch(flight_phase) {
+    case PREFLIGHT:
+      preflight_loop(2);
+      break;
+    case ARMED:
+      ready_loop(2);
+      break;
+    case FLIGHT:
+      flight_loop(2);
+      break;
+    case OVERSHOOT:
+      overshoot_loop(2);
+      break;
+    case COAST:
+      coast_loop(2);
+      break;
+    case DESCENT:
+      descend_loop(2);
+      break;
   }
 
-  if (height > target_apogee) overshoot();
+  delay(5);
+}
 
-  // TODO the altitude reading is TOO NOISY for this cutoff: will have to add additional conditions
-  if (max_height > height && (millis() - max_height_clock) > 500) {
-    descend();
+
+void preflight_loop(int core) {
+  if (core == 1) {
+    // digitalWrite(LED_BUILTIN, HIGH);
+    // delay(500);
+    // digitalWrite(LED_BUILTIN, LOW);
+    // delay(1000);
+
+    if (millis() > 3000) arm();
+
+    collect_telemetry();
+    calculate_telemetry();
+    // TODO: disable telemetry write on ground for final flight
+    write_telemetry();
+  } else if (core == 2) {
+
   }
 }
 
-void overshoot_loop() {
-  collect_telemetry();
-  calculate_telemetry();
-  write_telemetry();
+void ready_loop(int core) {
+  if (core == 1) {
+    // digitalWrite(LED_BUILTIN, HIGH);
 
-  if (max_height > (height + 50)) descend();
+    // delay(100);
+    // digitalWrite(LED_BUILTIN, LOW);
+    // delay(100);
 
-  if (max_height > height && (millis() - max_height_clock) > 500) {
-    descend();
+    collect_telemetry();
+    calculate_telemetry();
+    // TODO: disable telemetry write on ground for final flight
+    write_telemetry();
+
+    if (acceleration > 10) launch();
+  } else if (core == 2) {
+
   }
 }
 
-void descend_loop() {
-  // Continue logging for five minutes after apogee
-  if ((millis() - apogee_timestamp) < 300000) {
+void flight_loop(int core) {
+  if (core == 1) {
     collect_telemetry();
     calculate_telemetry();
     write_telemetry();
-  } else if (log_terminated == false) {
-    log("Five minutes after apogee. Logging terminated.");
-    log_terminated = true;
+
+    if (acceleration < 5) coast();
+  } else if (core == 2) {
+
+  }
+}
+
+void coast_loop(int core) {
+  if (core == 1) {
+    collect_telemetry();
+    calculate_telemetry();
+    write_telemetry();
+
+    if (BEAVS_control == ACTIVE) {
+      tick_PID();
+
+      command_deflection(u);
+    }
+
+    if (height > target_apogee) overshoot();
+
+    // TODO the altitude reading is TOO NOISY for this cutoff: will have to add additional conditions
+    if (max_height > height && (millis() - max_height_clock) > 500) {
+      descend();
+    }
+  } else if (core == 2) {
+
+  }
+}
+
+void overshoot_loop(int core) {
+  if (core == 1) {
+    collect_telemetry();
+    calculate_telemetry();
+    write_telemetry();
+
+    if (max_height > (height + 50)) descend();
+
+    if (max_height > height && (millis() - max_height_clock) > 500) {
+      descend();
+    }
+  } else if (core == 2) {
+
+  }
+}
+
+void descend_loop(int core) {
+  if (core == 1) {
+    // Continue logging for five minutes after apogee
+    if ((millis() - apogee_timestamp) < 300000) {
+      collect_telemetry();
+      calculate_telemetry();
+      write_telemetry();
+    } else if (log_terminated == false) {
+      log("Five minutes after apogee. Logging terminated.");
+      log_terminated = true;
+    }
+  } else if (core == 2) {
+
   }
 }
 
