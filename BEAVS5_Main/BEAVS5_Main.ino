@@ -646,7 +646,7 @@ void calculate_telemetry() {
 
   drag_force_expected = abs(0.5 * air_density * (velocity * velocity) * Cd * A_ref);
 
-  // Convert two-axis pitch into single-axis pitch
+  // Convert two-axis pitch rotation into single-axis pitch, degrees from vertical
   float a1 = degrees_to_radians(pitch_angle_x);
   float a2 = degrees_to_radians(pitch_angle_y);
 
@@ -658,8 +658,13 @@ void calculate_telemetry() {
 
   float l = sqrt((l1 * l1) + (l2 * l2));
 
-  // TODO EMERGENCY: do something to make sure i dont divide by zero during flight lmfao
-  pitch_angle = abs(radians_to_degrees(atan(l / h)));
+  // funny thing to make sure i dont divide by zero during flight lmfao
+  if (h = 0) {
+    // if h = 0, angle vector is perfectly aligned with x/y plane, meaning it is 90 degrees rotated from z-axis vertical
+    pitch_angle = 90;
+  } else {
+    pitch_angle = abs(radians_to_degrees(atan(l / h)));
+  }
 
   if ((abs(pitch_angle_x) > 90) || (abs(pitch_angle_y) > 90)) {
     pitch_angle = 180 - pitch_angle;
