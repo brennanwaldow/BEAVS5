@@ -46,7 +46,7 @@ enum { STOWED, ZEROING, MAX_BRAKING, ACTIVE };
     // ACTIVE -- PID loop controls blade deflection
 
 // TODO: SET TO FIELD/ACTIVE BEFORE FLIGHT
-int BEAVS_mode = FIELD;
+int BEAVS_mode = SIM;
 int BEAVS_control = ACTIVE;
 
 enum { SEA_LEVEL = 0, TESTING = 67, BROTHERS_OR = 1380 };
@@ -420,7 +420,7 @@ void arm() {
   } else if (BEAVS_mode == SIM) {
     log("BEAVS running in SIM mode.");
     if (BEAVS_control == ZEROING) {
-      command_deflection(0);
+      command_deflection(-1);
     } else if (BEAVS_control == MAX_BRAKING) {
       command_deflection(1);
     } else {
@@ -633,8 +633,8 @@ void calculate_telemetry() {
 
   // TODO: Merge this with get_beavs_drag function or something idk
   float A_ref = 0.02043171233;
-  float virtual_deflection = max((virtual_angle - 8.86) / (150 - 8.86), 0);
-  float A_beavs = ((feet_to_meters(1.632 / 12) * feet_to_meters(2.490 / 12)) * 2) * virtual_deflection;
+  float virtual_deflection = max((virtual_angle - 4.322) / (120 - 4.322), 0);
+  float A_beavs = ((feet_to_meters(1.42075 / 12) * feet_to_meters(2.490 / 12)) * 2) * virtual_deflection;
   
   float speed_of_sound = (-0.003938999995558203 * altitude) + 340.3888999387908;
   float Mach = abs(velocity) / speed_of_sound;
@@ -698,8 +698,8 @@ void tick_PID() {
 }
 
 void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full extend); or -1 for full retract (inside tube Inner Diameter)
-  float min_def = 8.86;
-  float max_def = 150.0;
+  float min_def = 4.322;
+  float max_def = 120.0;
   float max_deg = 270.0;
 
   int max_pulse = 2500;
@@ -810,8 +810,8 @@ void get_trolled_idiot() {
 
   // TODO: Update for new Outer Diameter when openrocket finalized
   float A_ref = 0.02043171233;
-  float virtual_deflection = max((virtual_angle - 8.86) / (150 - 8.86), 0);
-  float A_beavs = ((feet_to_meters(1.632 / 12) * feet_to_meters(2.490 / 12)) * 2) * virtual_deflection;
+  float virtual_deflection = max((virtual_angle - 4.322) / (120 - 4.322), 0);
+  float A_beavs = ((feet_to_meters(1.42075 / 12) * feet_to_meters(2.490 / 12)) * 2) * virtual_deflection;
   // TODO: Polyfit from Ansys Fluent god help us
   float Cd_beavs = 4.8 * (sqrt(A_beavs / A_ref)) * blade_modulation;
   float Cd = Cd_rocket + (Cd_beavs * (A_beavs / A_ref));
