@@ -134,6 +134,8 @@ double pitch_angle_y = 0;          // [deg]
 float drag_force_approx = 0;       // [N]
 float drag_force_expected = 0;     // [N]
 
+// long launch_clock = 0;
+long last_reset = 0;
 
 long clock_time = 0;               // [ms]
 long curr_time = 0;                // [micro s]
@@ -190,6 +192,10 @@ void setup() {
 
   pinMode(servo_pin, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
+
+  // Force power servo mosfet
+  pinMode(27, OUTPUT);
+  digitalWrite(27, HIGH);
 
   // Initialize SD card
   bool setRX(SD_pin_MISO);
@@ -363,7 +369,9 @@ void coast_loop(int core) {
       descend();
     }
   } else if (core == 2) {
+    if (BEAVS_control == ACTIVE) {
 
+    }
   }
 }
 
@@ -482,9 +490,17 @@ void descend() {
   command_deflection(0);
 
   log("Apogee reached.");
-  log("Altitude achieved: " + String(height, 2) + " m AGL   //   " + String(meters_to_feet(height), 2) + " ft AGL");
+  log("Altitude achieved: " + String(max_height, 2) + " m AGL   //   " + String(meters_to_feet(max_height), 2) + " ft AGL");
 
   apogee_timestamp = millis();
+
+  // Funny moment for expo display
+
+  // last_reset = millis();
+  // arm();
+  // velocity = 0;
+  // altitude = launch_altitude;
+  // max_height = 0;
 }
 
 
@@ -612,8 +628,6 @@ void collect_telemetry() {
     Serial.print(acceleration);
     Serial.print(" ");
     Serial.println(velocity);
-    // TODO: Break delay into main loop clock!
-    delay(20);
   }
 }
 
@@ -786,7 +800,7 @@ void get_trolled_idiot() {
 
   // Motor cutout at 4 s, apogee at 25.03
 
-  long launch_clock = millis() - 15000;
+  long launch_clock = millis() - 15000 - last_reset;
 
   float speed_of_sound = (-0.003938999995558203 * altitude) + 340.3888999387908;
   float Mach = abs(velocity) / speed_of_sound;

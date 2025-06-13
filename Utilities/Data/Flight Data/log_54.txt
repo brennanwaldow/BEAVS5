@@ -1,0 +1,4 @@
+[4.69s] Initiating logger with index 54.
+[4.78s] Startup complete.
+[4.88s] Safety pin removed. BEAVS arming.
+[4.91s] BEAVS control: STOWED.
