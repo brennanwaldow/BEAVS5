@@ -75,6 +75,7 @@ bool BNO_failure = true;
 
 // Servo
 int servo_pin = 28; // GPIO 28 / Physical Pin 34
+int servo_mosfet_pin = 27; // GPIO 27 / Physical Pin 32
 
 // SD
 SdFs SD;
@@ -193,9 +194,7 @@ void setup() {
   pinMode(servo_pin, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
 
-  // Force power servo mosfet
-  pinMode(27, OUTPUT);
-  digitalWrite(27, HIGH);
+  pinMode(servo_mosfet_pin, OUTPUT);
 
   // Initialize SD card
   bool setRX(SD_pin_MISO);
@@ -401,6 +400,9 @@ void descend_loop(int core) {
     } else if (log_terminated == false) {
       log("Five minutes after apogee. Logging terminated.");
       log_terminated = true;
+
+      // Unpower servo to aid in de-integration
+      digitalWrite(servo_mosfet_pin, LOW);
     }
   } else if (core == 2) {
 
@@ -415,6 +417,9 @@ void arm() {
   flight_phase = ARMED;
 
   log("Safety pin removed. BEAVS arming.");
+  
+  // Power servo MOSFET
+  digitalWrite(servo_mosfet_pin, HIGH);
 
   if (BEAVS_control == STOWED) {
     log("BEAVS control: STOWED.");
