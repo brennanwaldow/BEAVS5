@@ -758,7 +758,7 @@ float velocity_lookup() {
   if (height < 776.2875822000002) return 283.67155136563815;
   if (height > target_apogee) return 0;
 
-  // These constants are obtained from ../Utilities/lookup_table.py using the OpenRocket simulation
+  // These constants are obtained from ../Utilities/OpenRocket Extractors/lookup_table.py using the OpenRocket simulation
   double consts[] = {
     -1.340426210934022e-43,
     3.1554665860233744e-39,
@@ -790,74 +790,75 @@ float velocity_lookup() {
 }
 
 
-// Spoof telemetry data with real-time simulated flight
-// RUDIMENTARY SIMULATION: ONLY for validating logic behavior, NOT pid response
+//    ---   ON-BOARD SIMULATION   ---
+
+// Spoof flight computer data with real-time simulated flight
 void get_trolled_idiot() {
-  // Apogee: 3493m (11459 ft)
-
-  // Cd: ~ 0.6
-  // T = 3000 N
-  // Drag force max = 900 N at burnout
-  // Max velocity = 350 m/s at burnout
-  // Max acceleration = 120 m/s^2 at halfway burn
-  // Max deceleration = -45 m/s^2 at burnout
-  // Mass = 27.6 kg, mass at burnout = 22.9 kg, D = 15.6 cm
-
-  // Motor cutout at 4 s, apogee at 25.03
-
+  // Offset sim clock by 15s to allow for startup
   long launch_clock = millis() - 15000 - last_reset;
 
-  float speed_of_sound = (-0.003938999995558203 * altitude) + 340.3888999387908;
+  // Calculate atmospherics
+  float speed_of_sound = (-0.003938999995558203 * altitude) + 340.3888999387908;      // Obtain constants from Utilities/OpenRocket Extractors/speed_of_sound_extractor.py
   float Mach = abs(velocity) / speed_of_sound;
   float Cd_rocket = get_Cd(Mach);
-  float air_density = (-6.866808372788853e-14 * pow(altitude, 3) + 4.309128823975302e-09 * pow(altitude, 2) + (-0.00011761140418837493 * altitude) + 1.2252514803412429);
+  float air_density = (-6.866808372788853e-14 * pow(altitude, 3) + 4.309128823975302e-09 * pow(altitude, 2) + (-0.00011761140418837493 * altitude) + 1.2252514803412429);   // Obtain constants from Utilities/OpenRocket Extractors/air_density_extractor.py
 
+  // Mass and thrust as a function of time - changing with motor burn
   float mass = get_mass(launch_clock);
-
-  // double curr_time = micros();
-  double dt = (curr_time - clock_time) / (double) 1000000;
-
-  // Launch
   float thrust = get_thrust(launch_clock);
 
   // Modulate thrust to simulate performance deviation in reality
   thrust = thrust * thrust_modulation;
 
+  // Change in time [seconds]
+  double dt = (curr_time - clock_time) / (double) 1000000;
+
+  // After T-0, calculate acceleration from applied forces
   if (launch_clock > 0) {
     acceleration = -(gravity(altitude) * cos(degrees_to_radians(launch_angle))) + (thrust / mass);
     perpendicular_acceleration = (gravity(altitude) * sin(degrees_to_radians(launch_angle)));
   }
 
-  // Drag
+      // --- Drag ---
+  
+  // Flip drag vector if velocity is negative so that it's always a dissipative force
   int dir = 1;
   if (velocity < 0) dir = -1;
 
-  // TODO: Update for new Outer Diameter when openrocket finalized
-  float A_ref = 0.02043171233;
-  float virtual_deflection = max((virtual_angle - 4.322) / (120 - 4.322), 0);
-  float A_beavs = ((feet_to_meters(1.42075 / 12) * feet_to_meters(2.490 / 12)) * 2) * virtual_deflection;
-  // TODO: Polyfit from Ansys Fluent god help us
+  // TODO: Update area for new Outer Diameter when openrocket finalized
+  float A_ref = 0.02043171233;                                                                                // Cross-section area of fuselage corresponding to OpenRocket reference area
+  float virtual_deflection = max((virtual_angle - 4.322) / (120 - 4.322), 0);                                 // Map blade deflection angle to a [0, 1] ratio for math
+  float A_beavs = ((feet_to_meters(1.42075 / 12) * feet_to_meters(2.490 / 12)) * 2) * virtual_deflection;     // Cross-section area of exposed BEAVS blades
+  // TODO: Adjust rudimentary drag equation with correction factors from Ansys Fluent comparison - using Utilities/drag_mapper.py
   float Cd_beavs = 4.8 * (sqrt(A_beavs / A_ref)) * blade_modulation;
-  float Cd = Cd_rocket + (Cd_beavs * (A_beavs / A_ref));
+  float Cd = Cd_rocket + (Cd_beavs * (A_beavs / A_ref));                        // Total combined rocket drag coefficient
 
+  // Calculate drag force and reapply to total instantaneous acceleration
   float Fd = (0.5 * air_density * (velocity * velocity) * Cd * A_ref) * dir;
   acceleration = acceleration - (Fd / mass);
 
+  // Calculate change in velocity from instantaneous acceleration
   double dv = acceleration * dt;
   double dv_perpendicular = perpendicular_acceleration * dt;
 
   if (launch_clock > 0) {
+    // Adjust previous frame's instanteous velocity by the change in velocity
     velocity = velocity + dv;
     perpendicular_velocity = perpendicular_velocity + dv_perpendicular;
   }
 
-  // From rotated coordinate system to vertical coordinate system
-  double dh = ((velocity * dt) * cos(degrees_to_radians(launch_angle))); // - (perpendicular_velocity * sin(degrees_to_radians(launch_angle)));
+  // Calculate change in altitude from instantaneous velocity
+  double dh = ((velocity * dt) * cos(degrees_to_radians(launch_angle)));  // From rotated coordinate system to vertical coordinate system
+  // Adjust previous frame's instantaneous altitude by change in altitude
   altitude = altitude + dh;
-  if (altitude < launch_altitude) altitude = launch_altitude;
+  if (altitude < launch_altitude) altitude = launch_altitude;     // oops don't fall through the floor !
 
-  // Fix flight conditions to post-launch without simulating burn:
-  // if (launch_clock < (4.505) * 1000) {
+
+  // Uncomment this block to fix flight conditions to post-launch without simulating burn:
+      // Hardcoded data from OpenRocket export at time of burnout
+      // Sim will hold until burnout, then release back to live sim as if engine burn is already complete
+
+  // if (launch_clock < (4.505) * 1000) {       // t_burnout = 4.505s (4505 ms)
   //   altitude = 796.68;
   //   acceleration = 0;
   //   velocity = 285.398;
@@ -865,20 +866,21 @@ void get_trolled_idiot() {
   //   flight_phase = COAST;
   // }
 
-  // Smoothly adjust physical blade angle based on measured servo speed
+
+  // Smoothly adjust physical real-world blade angle towards the commanded angle based on measured servo response speed (150deg/1.41s)
   if (commanded_angle > virtual_angle) virtual_angle = virtual_angle + min(commanded_angle - virtual_angle, (150.0 / 1.41) * dt);
   else if (commanded_angle < virtual_angle) virtual_angle = virtual_angle + max(commanded_angle - virtual_angle, -(150.0 / 1.41) * dt);
 
+  // the big data dump
   Serial.print((float) launch_clock / 1000.0);
   Serial.print(" ");
   Serial.print(acceleration);
   Serial.print(" ");
   Serial.print(velocity);
   Serial.print(" ");
-
-
   Serial.print(height);
   Serial.print(" ");
+
   Serial.print(Fd);
   Serial.print(" ");
   Serial.print(drag_force_approx);
@@ -905,10 +907,12 @@ void get_trolled_idiot() {
   Serial.print(" ");
   Serial.print(target_velocity);
   Serial.print(" ");
-  Serial.println(virtual_angle);
-  // Serial.print(" ");
-  // Serial.println(flight_phase);
+  Serial.print(virtual_angle);
+  Serial.print(" ");
+  Serial.println(flight_phase);
 
+
+          // Printing for csv output: not really needed anymore now that logging is available
   // Serial.print((float) launch_clock / 1000.0);
   // Serial.print(",");
   // Serial.print(acceleration);
@@ -919,14 +923,14 @@ void get_trolled_idiot() {
 }
 
 
-// Utility functions
+// Data interpolation functions
 
 float gravity(float altitude) {          // altitude [meters]
   // Range of polynomial validity
   if (altitude < 1380.00067880291) return 9.800601153885829;
   if (altitude > 6575.6628767) return 9.784637022898936;
 
-  // These constants are obtained from ../Utilities/gravity_extractor.py using the OpenRocket simulation
+  // These constants are obtained from ../Utilities/OpenRocket Extractors/gravity_extractor.py using the OpenRocket simulation
   double consts[] = {
     1.9820614413562718e-22,   // P1
     -5.3066518070855185e-18,   // P2
@@ -958,6 +962,7 @@ float get_Cd(float mach) {
     if (mach < 0.0218646) return 0.6121415;
   }
 
+  // These interpolation values are obtained from Utilities/OpenRocket Extractors/drag_curve.py
   double machValues[435] = { 0.1000412, 0.1015506, 0.1030994, 0.1046778, 0.1062021, 0.1077064, 0.1092126, 0.1107356, 0.1122538, 0.1137099, 0.1152098, 0.1167975, 0.1183759, 0.1199052, 0.1214738, 0.1230561, 0.1245801, 0.1260949,
   0.1276424, 0.1291635, 0.1307118, 0.1323242, 0.1339504, 0.1355597, 0.1371361, 0.1386867, 0.1402017, 0.1417595, 0.1433569, 0.1449348, 0.1464978, 0.1480768, 0.1496509, 0.1512092, 0.1527589, 0.1543301, 0.1558746, 0.1574346,
   0.1590458, 0.160643, 0.1622213, 0.1638021, 0.1654129, 0.1670202, 0.1686087, 0.1701813, 0.1717713, 0.1733559, 0.1749363, 0.1764932, 0.1780525, 0.1796486, 0.1812048, 0.1827711, 0.1843824, 0.1860053, 0.1876253, 0.1892065,
@@ -1014,6 +1019,7 @@ float get_thrust(float time) {
   if (time < 0) return 0;
   if (time > 4505) return 0;
   
+  // These interpolation values are obtained from Utilities/OpenRocket Extractors/thrust_extractor.py
   double timeValues[138] = { 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0, 120.0, 130.0, 140.0, 150.0, 160.0, 170.0, 180.0, 190.0, 200.0, 210.0, 220.0, 230.0, 240.0, 250.0,
   260.0, 270.0, 280.0, 290.0, 300.0, 310.0, 320.0, 330.0, 340.0, 350.0, 360.0, 370.0, 380.0, 390.0, 400.0, 410.0, 420.0, 430.0, 440.0, 450.0, 460.0, 470.0, 480.0, 490.0, 500.0, 510.0, 520.0,
   530.0, 540.0, 550.0, 560.0, 570.0, 580.0, 595.0, 617.5, 651.25, 701.25, 751.25, 801.25, 851.25, 901.25, 951.25, 1001.25, 1051.25, 1101.25, 1151.25, 1201.25, 1251.25, 1301.25, 1351.25, 1401.25,
@@ -1043,7 +1049,7 @@ float get_mass(float time) { // [ms]
   if (time < 0.0) return 27.996384;
   if (time > 4550.0) return 23.101488;
 
-  // These constants are obtained from ../Utilities/mass_extractor.py using the OpenRocket simulation
+  // These constants are obtained from ../Utilities/OpenRocket Extractors/mass_extractor.py using the OpenRocket simulation
   double consts[] = {
     -3.5082664748532575e-50,
     1.4709841712847682e-45,
@@ -1074,6 +1080,9 @@ float get_mass(float time) { // [ms]
   return (float) result;
 }
 
+
+// Utility functions
+
 float get_Fd_BEAVS(float velocity, float Cd_BEAVS, float A_BEAVS, float air_density) {
   return 0.5 * air_density * (velocity * velocity) * Cd_BEAVS * A_BEAVS;
 }
@@ -1087,4 +1096,4 @@ float radians_to_degrees(float radians) {
 }
 
 
-// If needed: utility functions for deployment ratio <--> servo degrees <--> c_d
+// If needed: utility functions for deployment ratio <--> servo degrees <--> c_d?
