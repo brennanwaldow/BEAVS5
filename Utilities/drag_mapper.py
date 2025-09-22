@@ -15,7 +15,7 @@ drag_table = [[], []]
 apogee_transition = 0.1 # [Mach]
 
 # Output from Ansys Fluent CFD
-# Deflection [N], (Velocity [m/s], Total Drag [N])
+# Deflection [ratio], (Velocity [m/s], Total Drag [N])
 cfd_values = [
     [0, [
         [100, 1000],

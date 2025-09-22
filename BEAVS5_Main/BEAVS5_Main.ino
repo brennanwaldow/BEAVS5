@@ -44,10 +44,14 @@ enum { STOWED, ZEROING, MAX_BRAKING, ACTIVE };
     // STOWED -- Flight computer runs, BEAVS blades remain flush with Outer Diameter
     // ZEROING -- For blade installation / integration, blade gear returns to zero position at Inner Diameter
     // ACTIVE -- PID loop controls blade deflection
+enum { PIN_ARMING, TIMER_ARMING };
+    // PIN_ARMING -- Remove Before Flight pins dictate arming cycle
+    // TIMER_ARMING -- Timer automatically engages ARMED phase after boot, ONLY to be used for testing / simulation
 
-// TODO: SET TO FIELD/ACTIVE BEFORE FLIGHT
+// TODO: SET TO FIELD/ACTIVE/PIN_ARMING BEFORE FLIGHT
 int BEAVS_mode = SIM;
 int BEAVS_control = ACTIVE;
+int BEAVS_arming = TIMER_ARMING;
 
 enum { SEA_LEVEL = 0, TESTING = 67, BROTHERS_OR = 1380 };
 float launch_altitude = BROTHERS_OR; // [meters]
@@ -302,11 +306,6 @@ void loop1() {
 
 void preflight_loop(int core) {
   if (core == 1) {
-    // digitalWrite(LED_BUILTIN, HIGH);
-    // delay(500);
-    // digitalWrite(LED_BUILTIN, LOW);
-    // delay(1000);
-
     if (millis() > 3000) arm();
 
     collect_telemetry();
@@ -320,12 +319,6 @@ void preflight_loop(int core) {
 
 void ready_loop(int core) {
   if (core == 1) {
-    // digitalWrite(LED_BUILTIN, HIGH);
-
-    // delay(100);
-    // digitalWrite(LED_BUILTIN, LOW);
-    // delay(100);
-
     collect_telemetry();
     calculate_telemetry();
     // TODO: disable telemetry write on ground for final flight
@@ -581,6 +574,7 @@ void collect_telemetry() {
     altitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
     // Serial.println(altitude);
 
+    // TODO: look more at this
     double dt = (micros() - clock_time) / (double) 1000000;
     velocity = (altitude - prev_altitude) / dt;
     clock_time = micros();
@@ -747,7 +741,6 @@ void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full ex
     delayMicroseconds(18550);
 
     // Pulses duration: 500 - 0deg; 1500 - 135deg; 2500 - 270deg
-    // TODO (i think. we must verify)
   }
 }
 
