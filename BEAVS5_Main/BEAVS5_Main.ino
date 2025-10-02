@@ -311,7 +311,11 @@ void loop1() {
 
 void preflight_loop(int core) {
   if (core == 1) {
-    if (millis() > 3000) arm();
+    if (BEAVS_arming == TIMER_ARMING) {
+      if (millis() > 3000) arm();
+    } else {
+      // TODO: Add conditions for awaiting pin interrupt here
+    }
 
     collect_telemetry();
     calculate_telemetry();
