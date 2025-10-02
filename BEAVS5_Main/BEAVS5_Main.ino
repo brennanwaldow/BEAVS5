@@ -314,7 +314,9 @@ void preflight_loop(int core) {
     if (BEAVS_arming == TIMER_ARMING) {
       if (millis() > 3000) arm();
     } else {
-      // TODO: Add conditions for awaiting pin interrupt here
+      // TODO: Add conditions for awaiting pin interrupt here {
+        // arm();
+      // }
     }
 
     collect_telemetry();
@@ -328,6 +330,10 @@ void preflight_loop(int core) {
 
 void ready_loop(int core) {
   if (core == 1) {
+    // TODO: Conditions for awaiting interrupt for reinsertion of Remove Before Flight Pin
+      // disarm();
+    // }
+
     collect_telemetry();
     calculate_telemetry();
     // TODO: disable telemetry write on ground for final flight
