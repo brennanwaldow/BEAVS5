@@ -40,7 +40,7 @@ String BEAVS_version = "5.0.0";
 enum { SIM, FIELD };
     // SIM -- False telemetry data from On-Board Simulation
     // FIELD -- Live telemetry data from flight instruments
-enum { STOWED, ZEROING, MAX_BRAKING, ACTIVE };
+enum { STOWED, ZEROING, MAX_BRAKING, DATA_COLLECTION, ACTIVE };
     // STOWED -- Flight computer runs, BEAVS blades remain flush with Outer Diameter
     // ZEROING -- For blade installation / integration, blade gear returns to zero position at Inner Diameter
     // ACTIVE -- PID loop controls blade deflection
@@ -50,7 +50,7 @@ enum { PIN_ARMING, TIMER_ARMING };
 
 // TODO: SET TO FIELD/ACTIVE/PIN_ARMING BEFORE FLIGHT
 int BEAVS_mode = SIM;
-int BEAVS_control = ACTIVE;
+int BEAVS_control = DATA_COLLECTION;
 int BEAVS_arming = TIMER_ARMING;
 
 enum { SEA_LEVEL = 0, TESTING = 67, BROTHERS_OR = 1380 };
@@ -154,6 +154,11 @@ long max_height_clock = 0;         // [ms]
 
 float commanded_angle = 0;         // [degrees; 0 to 270]
 float virtual_angle = 0;           // [degrees; 0 to 270]
+
+// DATA_COLLECTION mode
+long datacoll_timer = 0;                // [ms]
+float datacoll_time_interval = 2;       // [s]
+float datacoll_extension = 12.5;        // [%]
 
 enum { PREFLIGHT, ARMED, FLIGHT, COAST, OVERSHOOT, DESCENT };
     // PREFLIGHT -- Rocket is on the ground, safed with Remove Before Flight pin installed, blades flush with Inner Diameter
@@ -352,6 +357,12 @@ void coast_loop(int core) {
       tick_PID();
 
       command_deflection(u);
+    } else if (BEAVS_control == DATA_COLLECTION) {
+      if (millis() - datacoll_timer > (datacoll_time_interval * 1000)) {
+        datacoll_timer = millis();
+        u = u + (datacoll_extension / 100);
+        command_deflection(u);
+      }
     }
 
     if (height > target_apogee) overshoot();
