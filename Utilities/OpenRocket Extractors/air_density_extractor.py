@@ -2,7 +2,7 @@ import csv
 from matplotlib import pyplot as plt
 import numpy as np
 
-dataset = '5.3.10_Brothers'
+dataset = 'subscale-L1000W'
 launch_altitude = 1380
 # Openrocket sims are in AGL - set this to launch altitude used (Brothers = 1,380m)
 
@@ -20,12 +20,13 @@ with open('Utilities/Data/' + dataset + '_HighSpeed_DataSet.csv', newline='') as
 
         time = float(time)
         altitude = float(row[1]) + launch_altitude
-        velocity = float(row[2])
+        velocity = float(row[3])
 
-        temperature = float(row[49]) + 273.15     # Convert [C] to [K]
-        pressure = float(row[50]) * 100     # Convert [hPa] to [Pa]
+        # temperature = float(row[49]) + 273.15     # Convert [C] to [K]
+        # pressure = float(row[50]) * 100     # Convert [hPa] to [Pa]
 
-        density = (pressure / (287.058 * temperature))      # [kg/m^3]
+        # density = (pressure / (287.058 * temperature))      # [kg/m^3]
+        density = float(row[49]) * 1000 # [kg/m^3]
 
         # Stop at apogee
         if (velocity < 0 and time > 0.5): break
@@ -46,8 +47,8 @@ for const in constants:
     print(f'    {const},   // P{i}')
     i += 1
 
-print(f'\nPolynomial lower bound: {table[0][0]} kg/m^3, at {p(table[0][0])} m')
-print(f'Polynomial upper bound: {table[0][-1]} kg/m^3, at {p(table[0][-1])} m\n\n')
+print(f'\nPolynomial lower bound: {p(table[0][0])} kg/m^3, at {table[0][0]} m')
+print(f'Polynomial upper bound: {p(table[0][-1])} kg/m^3, at {table[0][-1]} m\n\n')
 
 
 # Graph density table

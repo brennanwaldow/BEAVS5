@@ -2,7 +2,7 @@ import csv
 from matplotlib import pyplot as plt
 import numpy as np
 
-dataset = '5.3.10_Brothers'
+dataset = 'subscale-L1000W'
 
 # Mach [M], drag coefficient [Cd]
 drag_table = [[], []]
@@ -23,12 +23,12 @@ with open('Utilities/Data/' + dataset + '_HighSpeed_DataSet.csv', newline='') as
         time = float(time)
 
         altitude = float(row[1])
-        velocity = float(row[2])
-        acceleration = float(row[3])
-        thrust = float(row[28])
+        velocity = float(row[3])
+        acceleration = float(row[5])
+        thrust = float(row[29])
 
-        mach = float(row[26])
-        drag_coeff = float(row[30])
+        mach = float(row[51])
+        drag_coeff = float(row[32])
 
         # Stop at apogee
         if (velocity < 0 and time > 0.5): break
@@ -51,12 +51,12 @@ with open('Utilities/Data/' + dataset + '_DataSet.csv', newline='') as csvfile:
         time = float(time)
 
         altitude = float(row[1])
-        velocity = float(row[2])
-        acceleration = float(row[3])
-        thrust = float(row[28])
+        velocity = float(row[3])
+        acceleration = float(row[5])
+        thrust = float(row[29])
 
-        mach = float(row[26])
-        drag_coeff = float(row[30])
+        mach = float(row[51])
+        drag_coeff = float(row[32])
 
         # Stop at apogee
         if (velocity < 0 and time > 0.5): break

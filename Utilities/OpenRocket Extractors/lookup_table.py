@@ -2,7 +2,7 @@ import csv
 from matplotlib import pyplot as plt
 import numpy as np
 
-dataset = '5.3.10_Brothers'
+dataset = 'subscale-L1000W'
 target_apogee = 3048 # [m]
 
 # Note that while other extractors use a Launch Altitude offset, the lookup table is a function of HEIGHT, not ALTITUDE, so it remains unadjusted
@@ -21,15 +21,15 @@ with open('Utilities/Data/' + dataset + '_DataSet.csv', newline='') as csvfile:
 
         time = float(time)
         altitude = float(row[1])
-        velocity = float(row[2])
-        acceleration = float(row[3])
-        thrust = float(row[28])
+        velocity = float(row[3])
+        acceleration = float(row[5])
+        thrust = float(row[29])
 
         # Stop at apogee
         if (velocity < 0 and time > 0.5): break
 
         # Wait until motor cutout to build table
-        if (thrust == 0):
+        if (thrust == 0 and altitude > 0):
             table[0].append(altitude)
             table[1].append(velocity)
 

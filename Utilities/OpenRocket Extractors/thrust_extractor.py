@@ -2,7 +2,7 @@ import csv
 from matplotlib import pyplot as plt
 import numpy as np
 
-dataset = '5.3.10_Brothers'
+dataset = 'subscale-L1000W'
 
 # Time [s], thrust [N]
 thrust_table = [[], []]
@@ -16,13 +16,14 @@ with open('Utilities/Data/' + dataset + '_DataSet.csv', newline='') as csvfile:
         if (time == '# Time (s)'): continue
 
         time = float(time) * 1000   # Convert [s] to [ms]
-        thrust = float(row[28])
+        altitude = float(row[1])
+        thrust = float(row[29])
 
         thrust_table[0].append(time)
         thrust_table[1].append(thrust)
 
         # Stop at motor cutout after acquiring last datapoint
-        if (thrust == 0): break
+        if (thrust == 0 and altitude > 0): break
 
 
 # Output for paste into Arduino

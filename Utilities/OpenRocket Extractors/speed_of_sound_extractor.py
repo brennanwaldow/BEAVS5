@@ -2,7 +2,7 @@ import csv
 from matplotlib import pyplot as plt
 import numpy as np
 
-dataset = '5.3.10_Brothers'
+dataset = 'subscale-L1000W'
 launch_altitude = 1380
 # Openrocket sims are in AGL - set this to launch altitude used (Brothers = 1,380m) to adjust to true altitude
 
@@ -20,9 +20,9 @@ with open('Utilities/Data/' + dataset + '_HighSpeed_DataSet.csv', newline='') as
 
         time = float(time)
         altitude = float(row[1]) + launch_altitude
-        velocity = float(row[2])
+        velocity = float(row[3])
 
-        c = float(row[51])
+        c = float(row[50])
 
         # Stop at apogee
         if (velocity < 0 and time > 0.5): break

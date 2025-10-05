@@ -2,7 +2,7 @@ import csv
 from matplotlib import pyplot as plt
 import numpy as np
 
-dataset = '5.3.10_Brothers'
+dataset = 'subscale-L1000W'
 
 # Time [ms], thrust [N]
 table = [[], []]
@@ -16,15 +16,16 @@ with open('Utilities/Data/' + dataset + '_DataSet.csv', newline='') as csvfile:
         if (time == '# Time (s)'): continue
 
         time = float(time)
-        velocity = float(row[2])
-        mass = float(row[19])
-        thrust = float(row[28])
+        altitude = float(row[1])
+        velocity = float(row[3])
+        mass = float(row[21])
+        thrust = float(row[29])
 
         table[0].append(time * 1000) # Convert [s] to [ms]
         table[1].append(mass / 1000) # Convert [g] to [kg]
         
         # Stop at burnout
-        if (thrust == 0): break
+        if (thrust == 0 and altitude > 0): break
 
 # Polyfit
 constants = np.polyfit(table[0], table[1], 15)
@@ -52,7 +53,7 @@ axes.plot(table[0], p(table[0]), label='Polynomial fit')
 axes.set_xlabel('Time (ms)')
 axes.set_xlim(0, 10000)
 axes.set_ylabel('Mass (kg)')
-axes.set_ylim(15, 30)
+# axes.set_ylim(15, 30)
 axes.grid(True)
 axes.legend()
 
