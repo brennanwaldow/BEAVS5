@@ -687,7 +687,7 @@ void calculate_telemetry() {
   float speed_of_sound = (-0.003938991248485773 * altitude) + 345.82471162249857;
   float Mach = abs(velocity) / speed_of_sound;
   float Cd_rocket = get_Cd(Mach);
-  float air_density = (-4.22496271090764e-14 * pow(altitude, 3) + 4.3377605243729705e-09 * pow(altitude, 2) + (-0.00012909753806450262 * altitude) + 1.3951534314088259);
+  float air_density = (-4.224962710944224e-14 * pow(altitude, 3) + 4.1628470681419666e-09 * pow(altitude, 2) + (-0.00011736669958683132 * altitude) + 1.2251486249604124);
 
   float Cd_beavs = 4.8 * (sqrt(A_beavs / A_ref)) * blade_modulation;
   float Cd = Cd_rocket + (Cd_beavs * (A_beavs / A_ref));
@@ -829,7 +829,7 @@ void get_trolled_idiot() {
   float speed_of_sound = (-0.003938999995558203 * altitude) + 345.82471162249857;      // Obtain constants from Utilities/OpenRocket Extractors/speed_of_sound_extractor.py
   float Mach = abs(velocity) / speed_of_sound;
   float Cd_rocket = get_Cd(Mach);
-  float air_density = (-4.22496271090764e-14 * pow(altitude, 3) + 4.3377605243729705e-09 * pow(altitude, 2) + (-0.00012909753806450262 * altitude) + 1.3951534314088259);   // Obtain constants from Utilities/OpenRocket Extractors/air_density_extractor.py
+  float air_density = (-4.224962710944224e-14 * pow(altitude, 3) + 4.1628470681419666e-09 * pow(altitude, 2) + (-0.00011736669958683132 * altitude) + 1.2251486249604124);   // Obtain constants from Utilities/OpenRocket Extractors/air_density_extractor.py
 
   // Mass and thrust as a function of time - changing with motor burn
   float mass = get_mass(launch_clock);
