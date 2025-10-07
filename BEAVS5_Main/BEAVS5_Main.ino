@@ -722,10 +722,10 @@ void calculate_telemetry() {
   float virtual_deflection = max((virtual_angle - 4.322) / (120 - 4.322), 0); // Convert deflection angle to ratio
   float A_Beavs = ((feet_to_meters(blade_length / 12) * feet_to_meters(blade_width / 12)) * 2) * virtual_deflection;
   
-  float speed_of_sound = (-0.003938991248485773 * altitude) + 345.82471162249857;
+  float speed_of_sound = get_speed_of_sound(altitude);
   float Mach = abs(velocity) / speed_of_sound;
   float Cd_rocket = get_Cd(Mach);
-  float air_density = (-4.224962710944224e-14 * pow(altitude, 3) + 4.1628470681419666e-09 * pow(altitude, 2) + (-0.00011736669958683132 * altitude) + 1.2251486249604124);
+  float air_density = get_air_density(altitude);
 
   float Cd_beavs = 4.8 * (sqrt(A_beavs / A_ref)) * blade_modulation;
   float Cd = Cd_rocket + (Cd_beavs * (A_beavs / A_ref));
@@ -864,10 +864,10 @@ void get_trolled_idiot() {
   long launch_clock = millis() - 15000 - last_reset;
 
   // Calculate atmospherics
-  float speed_of_sound = (-0.003938999995558203 * altitude) + 345.82471162249857;      // Obtain constants from Utilities/OpenRocket Extractors/speed_of_sound_extractor.py
+  float speed_of_sound = get_speed_of_sound(altitude);
   float Mach = abs(velocity) / speed_of_sound;
   float Cd_rocket = get_Cd(Mach);
-  float air_density = (-4.224962710944224e-14 * pow(altitude, 3) + 4.1628470681419666e-09 * pow(altitude, 2) + (-0.00011736669958683132 * altitude) + 1.2251486249604124);   // Obtain constants from Utilities/OpenRocket Extractors/air_density_extractor.py
+  float air_density = get_air_density(altitude);
 
   // Mass and thrust as a function of time - changing with motor burn
   float mass = get_mass(launch_clock);
@@ -1104,6 +1104,36 @@ float get_mass(float time) { // [ms]
   };
 
   int poly_order = 15;
+  double result = 0;
+
+  // pain
+  for (int i = 0; i < poly_order + 1; i++) {
+    result = result + ((double) pow(time, poly_order - i) * consts[i]);
+  }
+
+  return (float) result;
+}
+
+float get_speed_of_sound(float altitude) { // [meters]
+  // Obtain constants from Utilities/OpenRocket Extractors/speed_of_sound_extractor.py
+  double consts[] = {
+    -0.003938991248485773,   // P1
+    345.82471162249857,   // P2
+  };
+
+  return (consts[0] * altitude) + consts[1];
+}
+
+float get_air_density(float altitude) { // [meters]
+  // Obtain constants from Utilities/OpenRocket Extractors/air_density_extractor.py
+  double consts[] = {
+    -4.224962710944224e-14,   // P1
+    4.1628470681419666e-09,   // P2
+    -0.00011736669958683132,   // P3
+    1.2251486249604124,   // P4
+  };
+
+  int poly_order = 3;
   double result = 0;
 
   // pain
