@@ -53,6 +53,13 @@ int BEAVS_mode = SIM;
 int BEAVS_control = STOWED;
 int BEAVS_arming = TIMER_ARMING;
 
+
+// Aerodynamics Configuration
+
+float A_ref = 0.009;      // [m^2]; drag reference area, Fuselage cross section, as defined in OpenRocket output
+float blade_length = 1;   // [in]; length of one BEAVS blade, from Outer Diameter to Tip (NOTE: INCHES!!)
+float blade_width = 1.825;    // [in]; width of one BEAVS blade, from side to side (NOTE: INCHES!!)
+
 enum { SEA_LEVEL = 0, TESTING = 67, BROTHERS_OR = 1380 };
 float launch_altitude = BROTHERS_OR; // [meters]
 // TODO: Obtain pressure forecast and calibrate for launch
@@ -711,9 +718,9 @@ void calculate_telemetry() {
   // Calculate expected drag force due to BEAVS
 
   // TODO: Merge this with get_beavs_drag function or something idk
-  float A_ref = 0.009;
-  float virtual_deflection = max((virtual_angle - 4.322) / (120 - 4.322), 0);
-  float A_beavs = ((feet_to_meters(1 / 12) * feet_to_meters(1.825 / 12)) * 2) * virtual_deflection;
+  // float A_ref = 0.009; (now defined in Global Variable)
+  float virtual_deflection = max((virtual_angle - 4.322) / (120 - 4.322), 0); // Convert deflection angle to ratio
+  float A_Beavs = ((feet_to_meters(blade_length / 12) * feet_to_meters(blade_width / 12)) * 2) * virtual_deflection;
   
   float speed_of_sound = (-0.003938991248485773 * altitude) + 345.82471162249857;
   float Mach = abs(velocity) / speed_of_sound;
@@ -885,9 +892,9 @@ void get_trolled_idiot() {
   if (velocity < 0) dir = -1;
 
   // TODO: Update area for new Outer Diameter when openrocket finalized
-  float A_ref = 0.009;                                                                                // Cross-section area of fuselage corresponding to OpenRocket reference area
-  float virtual_deflection = max((virtual_angle - 4.322) / (120 - 4.322), 0);                                 // Map blade deflection angle to a [0, 1] ratio for math
-  float A_beavs = ((feet_to_meters(1 / 12) * feet_to_meters(1.825 / 12)) * 2) * virtual_deflection;     // Cross-section area of exposed BEAVS blades
+  // float A_ref = 0.009; (Now defined in Global Variable)         // Cross-section area of fuselage corresponding to OpenRocket reference area
+  float virtual_deflection = max((virtual_angle - 4.322) / (120 - 4.322), 0);                                                  // Map blade deflection angle to a [0, 1] ratio for math
+  float A_beavs = ((feet_to_meters(blade_length / 12) * feet_to_meters(blade_width / 12)) * 2) * virtual_deflection;           // Cross-section area of exposed BEAVS blades
   // TODO: Adjust rudimentary drag equation with correction factors from Ansys Fluent comparison - using Utilities/drag_mapper.py
   float Cd_beavs = 4.8 * (sqrt(A_beavs / A_ref)) * blade_modulation;
   float Cd = Cd_rocket + (Cd_beavs * (A_beavs / A_ref));                        // Total combined rocket drag coefficient
