@@ -7,6 +7,7 @@ import numpy as np
 graph = [[], [], [], [], [], [], [], [], [], [], []]
 current_phase = 0
 phase_changes = []
+# TODO: Update phase changes to accommodate new DISARMED state
 
 target_agl = 3048
 launch_elevation = 1380

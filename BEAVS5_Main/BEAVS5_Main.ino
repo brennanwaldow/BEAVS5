@@ -160,8 +160,9 @@ long datacoll_timer = 0;                // [ms]
 float datacoll_time_interval = 2;       // [s]
 float datacoll_extension = 12.5;        // [%]
 
-enum { PREFLIGHT, ARMED, FLIGHT, COAST, OVERSHOOT, DESCENT };
-    // PREFLIGHT -- Rocket is on the ground, safed with Remove Before Flight pin installed, blades flush with Inner Diameter
+enum { PREFLIGHT, DISARMED, ARMED, FLIGHT, COAST, OVERSHOOT, DESCENT };
+    // PREFLIGHT -- Rocket is on the ground, software just booted, awaiting insertion of Remove Before Flight pin
+    // DISARMED -- Rocket is on the ground, Remove Before Flight pin is inserted, blades flush with Inner Diameter, awaiting removal of pin
     // ARMED -- Remove Before Flight pin removed, startup animation played, blades flush with Outer Diameter
     // FLIGHT -- Motor ignition detected, currently burning and accelerating
     // COAST -- Motor burnout detected, BEAVS blades running according to BEAVS Control enum
@@ -260,6 +261,9 @@ void loop() {
     case PREFLIGHT:
       preflight_loop(1);
       break;
+    case DISARMED:
+      disarmed_loop(1);
+      break;
     case ARMED:
       ready_loop(1);
       break;
@@ -288,6 +292,9 @@ void loop1() {
     case PREFLIGHT:
       preflight_loop(2);
       break;
+    case DISARMED:
+      disarmed_loop(2);
+      break;
     case ARMED:
       ready_loop(2);
       break;
@@ -315,7 +322,7 @@ void preflight_loop(int core) {
       if (millis() > 3000) arm();
     } else {
       // TODO: Add conditions for awaiting pin interrupt here {
-        // arm();
+        // boot();
       // }
     }
 
@@ -323,6 +330,23 @@ void preflight_loop(int core) {
     calculate_telemetry();
     // TODO: disable telemetry write on ground for final flight
     write_telemetry();
+  } else if (core == 2) {
+
+  }
+}
+
+void disarmed_loop(int core) {
+  if (core == 1) {
+    // TODO: Conditions for awaiting interrupt for removal of Remove Before Flight Pin
+      // arm();
+    // }
+
+    collect_telemetry();
+    calculate_telemetry();
+    // TODO: disable telemetry write on ground for final flight
+    write_telemetry();
+
+    if (acceleration > 10) launch();
   } else if (core == 2) {
 
   }
@@ -487,9 +511,16 @@ void arm() {
   // Recalibrate launch ground level to current altitude?
 }
 
+void boot() {
+  // SAFETY PIN INSERTED: Boot to Disarmed state
+  flight_phase = DISARMED;
+  
+  log("Safety pin inserted. Booting to Disarmed.");
+}
+
 void disarm() {
   // SAFETY PIN REINSERTED: Return to Disarmed state
-  flight_phase = PREFLIGHT;
+  flight_phase = DISARMED;
   
   log("Safety pin reinserted. Disarming.");
 }
