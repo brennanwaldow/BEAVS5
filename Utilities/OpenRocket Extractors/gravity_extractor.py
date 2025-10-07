@@ -19,7 +19,7 @@ with open('Utilities/Data/' + dataset + '_HighSpeed_DataSet.csv', newline='') as
         if (time == '# Time (s)'): continue
 
         time = float(time)
-        altitude = float(row[1]) + launch_altitude
+        altitude = float(row[2])
         velocity = float(row[3])
 
         gravity = float(row[25])

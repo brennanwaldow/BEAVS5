@@ -993,17 +993,17 @@ void get_trolled_idiot() {
 
 float gravity(float altitude) {          // altitude [meters]
   // Range of polynomial validity
-  if (altitude < 1380.00067880291) return 9.800601153885829;
-  if (altitude > 6575.6628767) return 9.784637022898936;
+  if (altitude < 0.0) return 9.792043340094635;
+  if (altitude > 2665.815) return 9.783897486861186;
 
   // These constants are obtained from ../Utilities/OpenRocket Extractors/gravity_extractor.py using the OpenRocket simulation
   double consts[] = {
-    1.9820614413562718e-22,   // P1
-    -5.3066518070855185e-18,   // P2
-    5.398468733344706e-14,   // P3
-    -2.610086439273407e-10,   // P4
-    -2.4859764599374713e-06,   // P5
-    9.804405246460368,   // P6
+    1.272161225052247e-19,   // P1
+    -1.0302968242575852e-15,   // P2
+    2.9954043071825413e-12,   // P3
+    -3.729413702227631e-09,   // P4
+    -1.3068639921340512e-06,   // P5
+    9.792043340094635,   // P6
   };
 
   int poly_order = 5;
