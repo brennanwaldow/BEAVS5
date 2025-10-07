@@ -2,9 +2,9 @@ import csv
 from matplotlib import pyplot as plt
 import numpy as np
 
-dataset = 'subscale-L1000W'
+dataset = 'subscale_Brothers'
 launch_altitude = 1380
-# Openrocket sims are in AGL - set this to launch altitude used (Brothers = 1,380m) to adjust to true altitude
+# Openrocket sims are in AGL - set this to launch altitude used (Brothers = 1,380m) to adjust to true altitude (not necessary anymore)
 
 # Altitude [m], speed of sound [m/s]
 table = [[], []]
@@ -19,7 +19,7 @@ with open('Utilities/Data/' + dataset + '_HighSpeed_DataSet.csv', newline='') as
         if (time == '# Time (s)'): continue
 
         time = float(time)
-        altitude = float(row[1]) + launch_altitude
+        altitude = float(row[2]) # Sea Level
         velocity = float(row[3])
 
         c = float(row[50])

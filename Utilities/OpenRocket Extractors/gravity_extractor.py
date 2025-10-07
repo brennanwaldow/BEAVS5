@@ -2,7 +2,7 @@ import csv
 from matplotlib import pyplot as plt
 import numpy as np
 
-dataset = 'subscale-L1000W'
+dataset = 'subscale_Brothers'
 launch_altitude = 1380
 # Openrocket sims are in AGL - set this to launch altitude used (Brothers = 1,380m)
 
