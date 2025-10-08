@@ -164,8 +164,12 @@ float virtual_angle = 0;           // [degrees; 0 to 270]
 
 // DATA_COLLECTION mode
 long datacoll_timer = 0;                // [ms]
-float datacoll_time_interval = 2;       // [s]
-float datacoll_extension = 12.5;        // [%]
+//float datacoll_time_interval = 2;       // [s]
+//float datacoll_extension = 12.5;        // [%]
+
+int index=0;                       // [#]
+float extensions[3]={.3,.5,.9};    // [%]
+float waits[3]={2,2,2,2,2,2};      // [s]
 
 enum { PREFLIGHT, DISARMED, ARMED, FLIGHT, COAST, OVERSHOOT, DESCENT };
     // PREFLIGHT -- Rocket is on the ground, software just booted, awaiting insertion of Remove Before Flight pin
@@ -264,29 +268,26 @@ void loop() {
     digitalWrite(LED_BUILTIN, HIGH);
   }
 
-  switch(flight_phase) {
-    case PREFLIGHT:
-      preflight_loop(1);
-      break;
-    case DISARMED:
-      disarmed_loop(1);
-      break;
-    case ARMED:
-      ready_loop(1);
-      break;
-    case FLIGHT:
-      flight_loop(1);
-      break;
-    case OVERSHOOT:
-      overshoot_loop(1);
-      break;
-    case COAST:
-      coast_loop(1);
-      break;
-    case DESCENT:
-      descend_loop(1);
-      break;
-  }
+   switch(flight_phase) {
+     case PREFLIGHT:
+      preflight_loop(1);//just setup stuff
+       break;
+    case ARMED://on the launch pad??
+       ready_loop(1);
+       break;
+    case FLIGHT://When the motor is burning
+       flight_loop(1);
+       break;
+    case OVERSHOOT://We have already overshot the goal
+       overshoot_loop(1);
+       break;
+    case COAST://No more thrust
+       coast_loop(1);
+       break;
+    case DESCENT://Stop using airbreaks start falling
+       descend_loop(1);
+       break;
+   }
 
   clock_time = curr_time;
 
@@ -399,14 +400,19 @@ void coast_loop(int core) {
 
       command_deflection(u);
     } else if (BEAVS_control == DATA_COLLECTION) {
-      if (millis() - datacoll_timer > (datacoll_time_interval * 1000)) {
+     if (millis() - datacoll_timer > (waits[index]* 1000)) {
         datacoll_timer = millis();
-        u = u + (datacoll_extension / 100);
-        command_deflection(u);
+        index += 1;
+        if (index % 2== 0){
+            u = extensions[index/2];
+            command_deflection(u);
+        }else{
+            command_deflection(0);
+        }
       }
     }
 
-    if (height > target_apogee) overshoot();
+    //if (height > target_apogee) overshoot();
 
     // TODO the altitude reading is TOO NOISY for this cutoff: will have to add additional conditions
     if (max_height > height && (millis() - max_height_clock) > 500) {
