@@ -168,8 +168,8 @@ long datacoll_timer = 0;                // [ms]
 //float datacoll_extension = 12.5;        // [%]
 
 int index=0;                       // [#]
-float extensions[3]={.3,.5,.9};    // [%]
-float waits[3]={2,2,2,2,2,2};      // [s]
+float extensions={.3,.5,.9};    // [%]
+float waits={2,2,2,2,2,2};      // [s]
 
 enum { PREFLIGHT, DISARMED, ARMED, FLIGHT, COAST, OVERSHOOT, DESCENT };
     // PREFLIGHT -- Rocket is on the ground, software just booted, awaiting insertion of Remove Before Flight pin
