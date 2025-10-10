@@ -733,8 +733,8 @@ void calculate_telemetry() {
   float Cd_rocket = get_Cd(Mach);
   float air_density = (-4.224962710944224e-14 * pow(altitude, 3) + 4.1628470681419666e-09 * pow(altitude, 2) + (-0.00011736669958683132 * altitude) + 1.2251486249604124);
 
-  float Cd_beavs = 4.8 * (sqrt(A_beavs / A_ref)) * blade_modulation;
-  float Cd = Cd_rocket + (Cd_beavs * (A_beavs / A_ref));
+  float Cd_beavs = 4.8 * (sqrt(A_Beavs / A_ref)) * blade_modulation;
+  float Cd = Cd_rocket + (Cd_beavs * (A_Beavs / A_ref));
 
   drag_force_expected = abs(0.5 * air_density * (velocity * velocity) * Cd * A_ref);
 
