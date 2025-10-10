@@ -171,6 +171,8 @@ int extension_index=0;                       // [#]
 float extensions[]={.3,.5,.9};    // [%]
 float waits[]={2,2,2,2,2,2};      // [s]
 
+int max_extension_index = sizeof(waits)/sizeof(float);
+
 enum { PREFLIGHT, DISARMED, ARMED, FLIGHT, COAST, OVERSHOOT, DESCENT };
     // PREFLIGHT -- Rocket is on the ground, software just booted, awaiting insertion of Remove Before Flight pin
     // DISARMED -- Rocket is on the ground, Remove Before Flight pin is inserted, blades flush with Inner Diameter, awaiting removal of pin
@@ -402,12 +404,14 @@ void coast_loop(int core) {
     } else if (BEAVS_control == DATA_COLLECTION) {
      if (millis() - datacoll_timer > (waits[extension_index]* 1000)) {
         datacoll_timer = millis();
-        extension_index += 1;
         if (extension_index % 2== 0){
             u = extensions[extension_index/2];
             command_deflection(u);
         }else{
             command_deflection(0);
+        }
+        if (extension_index < max_extension_index-1) {
+          extension_index += 1;
         }
       }
     }
