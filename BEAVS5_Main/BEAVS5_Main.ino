@@ -50,7 +50,7 @@ enum { PIN_ARMING, TIMER_ARMING };
 
 // TODO: SET TO FIELD/ACTIVE/PIN_ARMING before COMPETITION FLIGHT; or FIELD/DATA_COLLECTION/PIN_ARMING for subscale drag validation flight
 int BEAVS_mode = SIM;
-int BEAVS_control = STOWED;
+int BEAVS_control = DATA_COLLECTION;
 int BEAVS_arming = TIMER_ARMING;
 
 
