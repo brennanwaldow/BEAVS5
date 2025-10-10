@@ -92,7 +92,7 @@ int servo_mosfet_pin = 27; // GPIO 27 / Physical Pin 32
 SdFs SD;
 FsFile log_file;
 FsFile telemetry_file;
-int log_index;
+int log_extension_index;
 String log_filename;
 String telemetry_filename;
 bool SD_failure = true;
@@ -167,7 +167,7 @@ long datacoll_timer = 0;                // [ms]
 //float datacoll_time_interval = 2;       // [s]
 //float datacoll_extension = 12.5;        // [%]
 
-int index=0;                       // [#]
+int extension_index=0;                       // [#]
 float extensions[]={.3,.5,.9};    // [%]
 float waits[]={2,2,2,2,2,2};      // [s]
 
@@ -233,11 +233,11 @@ void setup() {
     for (int i = 1; i < 10000; i++) {
       String filename = "Logs/log_" + String(i) + ".txt";
       if (SD.exists(filename) == 1) continue;
-      log_index = i;
+      log_extension_index = i;
       log_filename = filename;
-      telemetry_filename = "Data/data_" + String(log_index) + ".csv";
+      telemetry_filename = "Data/data_" + String(log_extension_index) + ".csv";
 
-      log("Initiating logger with index " + String(log_index) + ".");
+      log("Initiating logger with extension_index " + String(log_extension_index) + ".");
 
       write_telemetry_headers();
       break;
@@ -400,11 +400,11 @@ void coast_loop(int core) {
 
       command_deflection(u);
     } else if (BEAVS_control == DATA_COLLECTION) {
-     if (millis() - datacoll_timer > (waits[index]* 1000)) {
+     if (millis() - datacoll_timer > (waits[extension_index]* 1000)) {
         datacoll_timer = millis();
-        index += 1;
-        if (index % 2== 0){
-            u = extensions[index/2];
+        extension_index += 1;
+        if (extension_index % 2== 0){
+            u = extensions[extension_index/2];
             command_deflection(u);
         }else{
             command_deflection(0);
