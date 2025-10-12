@@ -231,6 +231,10 @@ void setup() {
   } else {
     SD_failure = false;
 
+    // Make data and log directories in case they don't exist
+    SD.mkdir("Logs");
+    SD.mkdir("Data");
+
     // Search for the first available log slot
     for (int i = 1; i < 10000; i++) {
       String filename = "Logs/log_" + String(i) + ".txt";
