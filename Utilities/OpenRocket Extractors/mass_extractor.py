@@ -2,7 +2,7 @@ import csv
 from matplotlib import pyplot as plt
 import numpy as np
 
-dataset = 'subscale-L1000W'
+dataset = 'subscale_Brothers'
 
 # Time [ms], thrust [N]
 table = [[], []]
