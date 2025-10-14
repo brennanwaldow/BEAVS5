@@ -170,6 +170,10 @@ long datacoll_timer = 0;                // [ms]
 int extension_index=0;                       // [#]
 float extensions[]={.3,.5,.9};    // [%]
 float waits[]={2,2,2,2,2,2};      // [s]
+//t=0 u=0,t=0.5 u=.3, dt=3  
+
+float interupt_time=0;
+bool interrupt_pin=0;
 
 int max_extension_index = sizeof(waits)/sizeof(float);
 
@@ -270,10 +274,15 @@ void loop() {
     digitalWrite(LED_BUILTIN, HIGH);
   }
 
+    
+
    switch(flight_phase) {
-     case PREFLIGHT:
+    case PREFLIGHT:
       preflight_loop(1);//just setup stuff
        break;
+    case DISARMED:
+     disarmed_loop(1);
+     break;   
     case ARMED://on the launch pad??
        ready_loop(1);
        break;
@@ -331,30 +340,35 @@ void preflight_loop(int core) {
     if (BEAVS_arming == TIMER_ARMING) {
       if (millis() > 3000) arm();
     } else {
-      // TODO: Add conditions for awaiting pin interrupt here {
-        // boot();
-      // }
+      if(digitalRead(interrupt_pin) == 1){
+        interupt_time=millis(); 
+        boot();
+      }
     }
 
     collect_telemetry();
     calculate_telemetry();
     // TODO: disable telemetry write on ground for final flight
-    write_telemetry();
+    //write_telemetry();
   } else if (core == 2) {
-
+    preflight();
   }
 }
 
 void disarmed_loop(int core) {
   if (core == 1) {
-    // TODO: Conditions for awaiting interrupt for removal of Remove Before Flight Pin
-      // arm();
-    // }
+    if(digitalRead(interrupt_pin) == 0){
+      if (millis()-interupt_time>5*1000 ){
+        arm();
+      }else {
+          
+      }
+    }
 
     collect_telemetry();
     calculate_telemetry();
-    // TODO: disable telemetry write on ground for final flight
-    write_telemetry();
+    // disable telemetry write on ground for final flight
+    //write_telemetry();
 
     if (acceleration > 10) launch();
   } else if (core == 2) {
@@ -364,14 +378,15 @@ void disarmed_loop(int core) {
 
 void ready_loop(int core) {
   if (core == 1) {
-    // TODO: Conditions for awaiting interrupt for reinsertion of Remove Before Flight Pin
-      // disarm();
-    // }
+    if(digitalRead(interrupt_pin) == 1){
+      interupt_time=millis(); 
+      disarm();
+    }
 
     collect_telemetry();
     calculate_telemetry();
-    // TODO: disable telemetry write on ground for final flight
-    write_telemetry();
+    // disable telemetry write on ground for final flight
+    //write_telemetry();
 
     if (acceleration > 10) launch();
   } else if (core == 2) {
@@ -526,6 +541,13 @@ void arm() {
   }
 
   // Recalibrate launch ground level to current altitude?
+}
+
+void preflight() {
+  // SAFETY PIN INSERTED: Boot to Disarmed state
+  flight_phase = preflight;
+  
+  log("Safety pin removed quickly. Switching to preflight.");
 }
 
 void boot() {
