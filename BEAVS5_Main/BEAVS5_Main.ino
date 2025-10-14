@@ -549,7 +549,7 @@ void arm() {
 
 void preflight() {
   // SAFETY PIN INSERTED: Boot to Disarmed state
-  flight_phase = preflight;
+  flight_phase = PREFLIGHT;
   
   log("Safety pin removed quickly. Switching to preflight.");
 }
