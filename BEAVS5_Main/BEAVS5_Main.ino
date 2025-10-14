@@ -96,7 +96,6 @@ int log_extension_index;
 String log_filename;
 String telemetry_filename;
 bool SD_failure = true;
-
 const int SD_pin_MISO = 16;
 const int SD_pin_MOSI = 19;
 const int SD_pin_CS = 17;
@@ -173,7 +172,7 @@ float waits[]={2,2,2,2,2,2};      // [s]
 //t=0 u=0,t=0.5 u=.3, dt=3  
 
 float interupt_time=0;
-bool interrupt_pin=0;
+bool interrupt_pin=21;
 
 int max_extension_index = sizeof(waits)/sizeof(float);
 
@@ -221,6 +220,7 @@ void setup() {
   pinMode(servo_pin, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
 
+  //pinMode(interrupt_pin, INPUT);
   pinMode(servo_mosfet_pin, OUTPUT);
 
   // Initialize SD card
