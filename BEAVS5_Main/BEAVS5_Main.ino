@@ -20,16 +20,16 @@ Servo: DS3235
 
 // Utility
 
-float feet_to_meters(float length) {     // length [feet]
-  return length / 3.28084; // [meters]
+float feet_to_meters(float length) {  // length [feet]
+  return length / 3.28084;            // [meters]
 }
 
-float meters_to_feet(float length) {     // length [meters]
-  return length * 3.28084; // [feet]
+float meters_to_feet(float length) {  // length [meters]
+  return length * 3.28084;            // [feet]
 }
 
-float inhg_to_hpa(float pressure) {     // pressure [inches mercury]
-  return pressure * 33.863889532611; // [ HPa ]
+float inhg_to_hpa(float pressure) {   // pressure [inches mercury]
+  return pressure * 33.863889532611;  // [ HPa ]
 }
 
 
@@ -37,16 +37,22 @@ float inhg_to_hpa(float pressure) {     // pressure [inches mercury]
 String BEAVS_version = "5.0.0";
 
 // Initialization
-enum { SIM, FIELD };
-    // SIM -- False telemetry data from On-Board Simulation
-    // FIELD -- Live telemetry data from flight instruments
-enum { STOWED, ZEROING, MAX_BRAKING, DATA_COLLECTION, ACTIVE };
-    // STOWED -- Flight computer runs, BEAVS blades remain flush with Outer Diameter
-    // ZEROING -- For blade installation / integration, blade gear returns to zero position at Inner Diameter
-    // ACTIVE -- PID loop controls blade deflection
-enum { PIN_ARMING, TIMER_ARMING };
-    // PIN_ARMING -- Remove Before Flight pins dictate arming cycle
-    // TIMER_ARMING -- Timer automatically engages ARMED phase after boot, ONLY to be used for testing / simulation
+enum { SIM,
+       FIELD };
+// SIM -- False telemetry data from On-Board Simulation
+// FIELD -- Live telemetry data from flight instruments
+enum { STOWED,
+       ZEROING,
+       MAX_BRAKING,
+       DATA_COLLECTION,
+       ACTIVE };
+// STOWED -- Flight computer runs, BEAVS blades remain flush with Outer Diameter
+// ZEROING -- For blade installation / integration, blade gear returns to zero position at Inner Diameter
+// ACTIVE -- PID loop controls blade deflection
+enum { PIN_ARMING,
+       TIMER_ARMING };
+// PIN_ARMING -- Remove Before Flight pins dictate arming cycle
+// TIMER_ARMING -- Timer automatically engages ARMED phase after boot, ONLY to be used for testing / simulation
 
 // TODO: SET TO FIELD/ACTIVE/PIN_ARMING before COMPETITION FLIGHT; or FIELD/DATA_COLLECTION/PIN_ARMING for subscale drag validation flight
 int BEAVS_mode = SIM;
@@ -56,23 +62,25 @@ int BEAVS_arming = TIMER_ARMING;
 
 // Aerodynamics Configuration
 
-float A_ref = 0.009;      // [m^2]; drag reference area, Fuselage cross section, as defined in OpenRocket output
-float blade_length = 1;   // [in]; length of one BEAVS blade, from Outer Diameter to Tip (NOTE: INCHES!!)
-float blade_width = 1.825;    // [in]; width of one BEAVS blade, from side to side (NOTE: INCHES!!)
+float A_ref = 0.009;        // [m^2]; drag reference area, Fuselage cross section, as defined in OpenRocket output
+float blade_length = 1;     // [in]; length of one BEAVS blade, from Outer Diameter to Tip (NOTE: INCHES!!)
+float blade_width = 1.825;  // [in]; width of one BEAVS blade, from side to side (NOTE: INCHES!!)
 
-enum { SEA_LEVEL = 0, TESTING = 67, BROTHERS_OR = 1380 };
-float launch_altitude = BROTHERS_OR; // [meters]
+enum { SEA_LEVEL = 0,
+       TESTING = 67,
+       BROTHERS_OR = 1380 };
+float launch_altitude = BROTHERS_OR;  // [meters]
 // TODO: Obtain pressure forecast and calibrate for launch
-float launch_altimeter = inhg_to_hpa(30.12); // [HPa]
-float target_apogee = feet_to_meters(10000.0); // [meters], AGL
+float launch_altimeter = inhg_to_hpa(30.12);    // [HPa]
+float target_apogee = feet_to_meters(10000.0);  // [meters], AGL
 
 // Simulation only
-float launch_angle = 0; // [degrees], from vertical
-float thrust_modulation = 1; // [multiplier]; modulate thrust curve to test performance under deviation from theoretical
-float blade_modulation = 1; // [multiplier]; modulate blade drag coefficient to test performance under deviation from theoretical
+float launch_angle = 0;       // [degrees], from vertical
+float thrust_modulation = 1;  // [multiplier]; modulate thrust curve to test performance under deviation from theoretical
+float blade_modulation = 1;   // [multiplier]; modulate blade drag coefficient to test performance under deviation from theoretical
 
-float perpendicular_acceleration = 0; // [m/s^2]
-float perpendicular_velocity = 0; // [m/s]
+float perpendicular_acceleration = 0;  // [m/s^2]
+float perpendicular_velocity = 0;      // [m/s]
 
 // BMP390
 #define WIRE Wire
@@ -85,8 +93,8 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 bool BNO_failure = true;
 
 // Servo
-int servo_pin = 28; // GPIO 28 / Physical Pin 34
-int servo_mosfet_pin = 27; // GPIO 27 / Physical Pin 32
+int servo_pin = 28;         // GPIO 28 / Physical Pin 34
+int servo_mosfet_pin = 27;  // GPIO 27 / Physical Pin 32
 
 // SD
 SdFs SD;
@@ -124,12 +132,12 @@ double ki = 2.500e-06;
 double kd = 4.688e-05;
 
 
-float target_velocity = 0; // [m/s]
-float u = 0; // [ratio], 0 to 1
+float target_velocity = 0;  // [m/s]
+float u = 0;                // [ratio], 0 to 1
 
-float error1 = 0; // [m/s]
-float error2 = 0; // [m/s]
-float error3 = 0; // [m/s]
+float error1 = 0;  // [m/s]
+float error2 = 0;  // [m/s]
+float error3 = 0;  // [m/s]
 
 // Flight Computer
 float altitude = launch_altitude;  // [meters]
@@ -137,54 +145,60 @@ float height = 0;                  // [meters]
 double velocity = 0;               // [m/s]
 double acceleration = 0;           // [m/s^2]
 
-double roll_angle = 0;             // [deg]
-double relative_roll_angle = 0;    // [deg]
-double pitch_angle = 0;            // [deg]
-double pitch_angle_x = 0;          // [deg]
-double pitch_angle_y = 0;          // [deg]
+double roll_angle = 0;           // [deg]
+double relative_roll_angle = 0;  // [deg]
+double pitch_angle = 0;          // [deg]
+double pitch_angle_x = 0;        // [deg]
+double pitch_angle_y = 0;        // [deg]
 
-float drag_force_approx = 0;       // [N]
-float drag_force_expected = 0;     // [N]
+float drag_force_approx = 0;    // [N]
+float drag_force_expected = 0;  // [N]
 
 // long launch_clock = 0;
 long last_reset = 0;
 
-long clock_time = 0;               // [ms]
-long curr_time = 0;                // [micro s]
-long pid_clock_time = 0;           // [ms]
-long launch_timestamp = 0;         // [ms]
-long apogee_timestamp = 0;         // [ms]
-bool log_terminated = false;       // [bool]
+long clock_time = 0;          // [ms]
+long curr_time = 0;           // [micro s]
+long pid_clock_time = 0;      // [ms]
+long launch_timestamp = 0;    // [ms]
+long apogee_timestamp = 0;    // [ms]
+bool log_terminated = false;  // [bool]
 
-float max_height = 0;              // [meters]
-long max_height_clock = 0;         // [ms]
+float max_height = 0;       // [meters]
+long max_height_clock = 0;  // [ms]
 
-float commanded_angle = 0;         // [degrees; 0 to 270]
-float virtual_angle = 0;           // [degrees; 0 to 270]
+float commanded_angle = 0;  // [degrees; 0 to 270]
+float virtual_angle = 0;    // [degrees; 0 to 270]
 
 // DATA_COLLECTION mode
-long datacoll_timer = 0;                // [ms]
+long datacoll_timer = 0;  // [ms]
 //float datacoll_time_interval = 2;       // [s]
 //float datacoll_extension = 12.5;        // [%]
 
-int extension_index=0;                       // [#]
-float extensions[]={.3,.5,.9};    // [%]
-float waits[]={2,2,2,2,2,2};      // [s]
-//t=0 u=0,t=0.5 u=.3, dt=3  
+int extension_index = 0;               // [#]
+float extensions[] = { .3, .5, .9 };   // [%]
+float waits[] = { 2, 2, 2, 2, 2, 2 };  // [s]
+//t=0 u=0,t=0.5 u=.3, dt=3
 
-float interupt_time=0;
-bool interrupt_pin=0;
+float interupt_time = 0;
+bool interrupt_pin = 21;
 
-int max_extension_index = sizeof(waits)/sizeof(float);
+int max_extension_index = sizeof(waits) / sizeof(float);
 
-enum { PREFLIGHT, DISARMED, ARMED, FLIGHT, COAST, OVERSHOOT, DESCENT };
-    // PREFLIGHT -- Rocket is on the ground, software just booted, awaiting insertion of Remove Before Flight pin
-    // DISARMED -- Rocket is on the ground, Remove Before Flight pin is inserted, blades flush with Inner Diameter, awaiting removal of pin
-    // ARMED -- Remove Before Flight pin removed, startup animation played, blades flush with Outer Diameter
-    // FLIGHT -- Motor ignition detected, currently burning and accelerating
-    // COAST -- Motor burnout detected, BEAVS blades running according to BEAVS Control enum
-    // OVERSHOOT -- Target apogee passed, last-ditch full extension deployment of blades to minimize overshoot
-    // DESCENT -- Apogee detected, blades retracted flush with Outer Diameter and control loop ceased
+enum { PREFLIGHT,
+       DISARMED,
+       ARMED,
+       FLIGHT,
+       COAST,
+       OVERSHOOT,
+       DESCENT };
+// PREFLIGHT -- Rocket is on the ground, software just booted, awaiting insertion of Remove Before Flight pin
+// DISARMED -- Rocket is on the ground, Remove Before Flight pin is inserted, blades flush with Inner Diameter, awaiting removal of pin
+// ARMED -- Remove Before Flight pin removed, startup animation played, blades flush with Outer Diameter
+// FLIGHT -- Motor ignition detected, currently burning and accelerating
+// COAST -- Motor burnout detected, BEAVS blades running according to BEAVS Control enum
+// OVERSHOOT -- Target apogee passed, last-ditch full extension deployment of blades to minimize overshoot
+// DESCENT -- Apogee detected, blades retracted flush with Outer Diameter and control loop ceased
 int flight_phase = PREFLIGHT;
 
 
@@ -258,7 +272,6 @@ void setup() {
 
 // Core 2
 void setup1() {
-
 }
 
 // -----   Control Loop   -----
@@ -274,31 +287,31 @@ void loop() {
     digitalWrite(LED_BUILTIN, HIGH);
   }
 
-    
 
-   switch(flight_phase) {
+
+  switch (flight_phase) {
     case PREFLIGHT:
-      preflight_loop(1);//just setup stuff
-       break;
+      preflight_loop(1);  //just setup stuff
+      break;
     case DISARMED:
-     disarmed_loop(1);
-     break;   
-    case ARMED://on the launch pad??
-       ready_loop(1);
-       break;
-    case FLIGHT://When the motor is burning
-       flight_loop(1);
-       break;
-    case OVERSHOOT://We have already overshot the goal
-       overshoot_loop(1);
-       break;
-    case COAST://No more thrust
-       coast_loop(1);
-       break;
-    case DESCENT://Stop using airbreaks start falling
-       descend_loop(1);
-       break;
-   }
+      disarmed_loop(1);
+      break;
+    case ARMED:  //on the launch pad??
+      ready_loop(1);
+      break;
+    case FLIGHT:  //When the motor is burning
+      flight_loop(1);
+      break;
+    case OVERSHOOT:  //We have already overshot the goal
+      overshoot_loop(1);
+      break;
+    case COAST:  //No more thrust
+      coast_loop(1);
+      break;
+    case DESCENT:  //Stop using airbreaks start falling
+      descend_loop(1);
+      break;
+  }
 
   clock_time = curr_time;
 
@@ -307,7 +320,7 @@ void loop() {
 
 // Core 2
 void loop1() {
-  switch(flight_phase) {
+  switch (flight_phase) {
     case PREFLIGHT:
       preflight_loop(2);
       break;
@@ -340,12 +353,12 @@ void preflight_loop(int core) {
     if (BEAVS_arming == TIMER_ARMING) {
       if (millis() > 3000) arm();
     } else {
-      if(digitalRead(interrupt_pin) == 1){
-        interupt_time=millis(); 
+      if (digitalRead(interrupt_pin) == 1) {
+        interupt_time = millis();
         boot();
       }
     }
-
+    //mason says make preflight bring blades in (set to 0)
     collect_telemetry();
     calculate_telemetry();
     // TODO: disable telemetry write on ground for final flight
@@ -357,14 +370,13 @@ void preflight_loop(int core) {
 
 void disarmed_loop(int core) {
   if (core == 1) {
-    if(digitalRead(interrupt_pin) == 0){
-      if (millis()-interupt_time>5*1000 ){
+    if (digitalRead(interrupt_pin) == 0) {
+      if (millis() - interupt_time > 5 * 1000) {
         arm();
-      }else {
-          
+      } else {
       }
     }
-
+    //mason wants this to be a little bit out
     collect_telemetry();
     calculate_telemetry();
     // disable telemetry write on ground for final flight
@@ -372,14 +384,13 @@ void disarmed_loop(int core) {
 
     if (acceleration > 10) launch();
   } else if (core == 2) {
-
   }
 }
 
 void ready_loop(int core) {
   if (core == 1) {
-    if(digitalRead(interrupt_pin) == 1){
-      interupt_time=millis(); 
+    if (digitalRead(interrupt_pin) == 1) {
+      interupt_time = millis();
       disarm();
     }
 
@@ -390,7 +401,6 @@ void ready_loop(int core) {
 
     if (acceleration > 10) launch();
   } else if (core == 2) {
-
   }
 }
 
@@ -402,7 +412,6 @@ void flight_loop(int core) {
 
     if (acceleration < 5) coast();
   } else if (core == 2) {
-
   }
 }
 
@@ -417,15 +426,15 @@ void coast_loop(int core) {
 
       command_deflection(u);
     } else if (BEAVS_control == DATA_COLLECTION) {
-     if (millis() - datacoll_timer > (waits[extension_index]* 1000)) {
+      if (millis() - datacoll_timer > (waits[extension_index] * 1000)) {
         datacoll_timer = millis();
-        if (extension_index % 2== 0){
-            u = extensions[extension_index/2];
-            command_deflection(u);
-        }else{
-            command_deflection(0);
+        if (extension_index % 2 == 0) {
+          u = extensions[extension_index / 2];
+          command_deflection(u);
+        } else {
+          command_deflection(0);
         }
-        if (extension_index < max_extension_index-1) {
+        if (extension_index < max_extension_index - 1) {
           extension_index += 1;
         }
       }
@@ -439,7 +448,6 @@ void coast_loop(int core) {
     }
   } else if (core == 2) {
     if (BEAVS_control == ACTIVE) {
-
     }
   }
 }
@@ -456,7 +464,6 @@ void overshoot_loop(int core) {
       descend();
     }
   } else if (core == 2) {
-
   }
 }
 
@@ -475,7 +482,6 @@ void descend_loop(int core) {
       digitalWrite(servo_mosfet_pin, LOW);
     }
   } else if (core == 2) {
-
   }
 }
 
@@ -487,7 +493,7 @@ void arm() {
   flight_phase = ARMED;
 
   log("Safety pin removed. BEAVS arming.");
-  
+
   // Power servo MOSFET
   digitalWrite(servo_mosfet_pin, HIGH);
 
@@ -546,14 +552,14 @@ void arm() {
 void preflight() {
   // SAFETY PIN INSERTED: Boot to Disarmed state
   flight_phase = PREFLIGHT;
-  
+
   log("Safety pin removed quickly. Switching to preflight.");
 }
 
 void boot() {
   // SAFETY PIN INSERTED: Boot to Disarmed state
   flight_phase = DISARMED;
-  
+
   log("Safety pin inserted. Booting to Disarmed.");
 }
 
@@ -575,7 +581,7 @@ void launch() {
 void coast() {
   // ENGINE CUTOFF: Deploy BEAVS
   flight_phase = COAST;
-  
+
   log("Coast phase entered, beginning deployment.");
 }
 
@@ -622,21 +628,21 @@ void write_telemetry() {
   telemetry_file = SD.open(telemetry_filename, O_CREAT | O_WRITE | O_APPEND);
   String timestamp = String(millis() / 1000.0, 4);
   String telemetry_string = timestamp + ","
-                          + altitude + ","
-                          + height + ","
-                          + velocity + ","
-                          + acceleration + ","
-                          + commanded_angle + ","
-                          + flight_phase + ","
-                          + drag_force_approx + ","
-                          + drag_force_expected + ","
-                          + target_velocity + ","
-                          + error1 + ","
-                          + roll_angle + ","
-                          + relative_roll_angle + ","
-                          + pitch_angle_x + ","
-                          + pitch_angle_y + ","
-                          + pitch_angle;
+                            + altitude + ","
+                            + height + ","
+                            + velocity + ","
+                            + acceleration + ","
+                            + commanded_angle + ","
+                            + flight_phase + ","
+                            + drag_force_approx + ","
+                            + drag_force_expected + ","
+                            + target_velocity + ","
+                            + error1 + ","
+                            + roll_angle + ","
+                            + relative_roll_angle + ","
+                            + pitch_angle_x + ","
+                            + pitch_angle_y + ","
+                            + pitch_angle;
   telemetry_file.println(telemetry_string);
   telemetry_file.close();
 }
@@ -645,21 +651,21 @@ void write_telemetry_headers() {
   telemetry_file = SD.open(telemetry_filename, O_CREAT | O_WRITE | O_APPEND);
   String timestamp = String(millis() / 1000.0, 4);
   String telemetry_string = String("# Time [s],")
-                          + String("# Altitude [m],")
-                          + String("# Height [m AGL],")
-                          + String("# Velocity [m/s],")
-                          + String("# Acceleration [m/s^2],")
-                          + String("# Commanded Angle [deg],")
-                          + String("# Flight Phase [int enum],")
-                          + String("# Approximate Drag Force [N],")
-                          + String("# Expected Drag Force [N],")
-                          + String("# Target Velocity [m/s],")
-                          + String("# Velocity Error [m/s],")
-                          + String("# Roll [deg],")
-                          + String("# Relative Roll [deg],")
-                          + String("# Pitch (x) [deg],")
-                          + String("# Pitch (y) [deg],")
-                          + String("# Pitch (from vertical) [deg]");
+                            + String("# Altitude [m],")
+                            + String("# Height [m AGL],")
+                            + String("# Velocity [m/s],")
+                            + String("# Acceleration [m/s^2],")
+                            + String("# Commanded Angle [deg],")
+                            + String("# Flight Phase [int enum],")
+                            + String("# Approximate Drag Force [N],")
+                            + String("# Expected Drag Force [N],")
+                            + String("# Target Velocity [m/s],")
+                            + String("# Velocity Error [m/s],")
+                            + String("# Roll [deg],")
+                            + String("# Relative Roll [deg],")
+                            + String("# Pitch (x) [deg],")
+                            + String("# Pitch (y) [deg],")
+                            + String("# Pitch (from vertical) [deg]");
   telemetry_file.println(telemetry_string);
   telemetry_file.close();
 }
@@ -680,7 +686,7 @@ void collect_telemetry() {
     // Serial.println(altitude);
 
     // TODO: look more at this
-    double dt = (micros() - clock_time) / (double) 1000000;
+    double dt = (micros() - clock_time) / (double)1000000;
     velocity = (altitude - prev_altitude) / dt;
     clock_time = micros();
 
@@ -751,9 +757,9 @@ void calculate_telemetry() {
 
   // TODO: Merge this with get_beavs_drag function or something idk
   // float A_ref = 0.009; (now defined in Global Variable)
-  float virtual_deflection = max((virtual_angle - 4.322) / (120 - 4.322), 0); // Convert deflection angle to ratio
+  float virtual_deflection = max((virtual_angle - 4.322) / (120 - 4.322), 0);  // Convert deflection angle to ratio
   float A_Beavs = ((feet_to_meters(blade_length / 12) * feet_to_meters(blade_width / 12)) * 2) * virtual_deflection;
-  
+
   float speed_of_sound = (-0.003938991248485773 * altitude) + 345.82471162249857;
   float Mach = abs(velocity) / speed_of_sound;
   float Cd_rocket = get_Cd(Mach);
@@ -791,7 +797,7 @@ void calculate_telemetry() {
 
 void tick_PID() {
   // long curr_time = micros();
-  double dt = (curr_time - clock_time) / (double) 1000;
+  double dt = (curr_time - clock_time) / (double)1000;
 
   target_velocity = velocity_lookup();
 
@@ -799,12 +805,12 @@ void tick_PID() {
   error2 = error1;
   error1 = velocity - target_velocity;
 
-  u = u + (double) (((kp + (ki * dt) + (kd / dt)) * error1) + abs((-kp - (2*kd / dt)) * error2) + ((kd / dt) * error3));
+  u = u + (double)(((kp + (ki * dt) + (kd / dt)) * error1) + abs((-kp - (2 * kd / dt)) * error2) + ((kd / dt) * error3));
   if (u > 1) u = 1;
   if (u < 0) u = 0;
 
   // if (error1 < 0) u = 0;
-  
+
   // Serial.print(dt);
   // Serial.print(" ");
   // Serial.print(error1);
@@ -881,10 +887,10 @@ float velocity_lookup() {
 
   // pain
   for (int i = 0; i < poly_order + 1; i++) {
-    result = result + ((double) pow(height, poly_order - i) * consts[i]);
+    result = result + ((double)pow(height, poly_order - i) * consts[i]);
   }
 
-  return (float) result;
+  return (float)result;
 }
 
 
@@ -896,10 +902,10 @@ void get_trolled_idiot() {
   long launch_clock = millis() - 15000 - last_reset;
 
   // Calculate atmospherics
-  float speed_of_sound = (-0.003938999995558203 * altitude) + 345.82471162249857;      // Obtain constants from Utilities/OpenRocket Extractors/speed_of_sound_extractor.py
+  float speed_of_sound = (-0.003938999995558203 * altitude) + 345.82471162249857;  // Obtain constants from Utilities/OpenRocket Extractors/speed_of_sound_extractor.py
   float Mach = abs(velocity) / speed_of_sound;
   float Cd_rocket = get_Cd(Mach);
-  float air_density = (-4.224962710944224e-14 * pow(altitude, 3) + 4.1628470681419666e-09 * pow(altitude, 2) + (-0.00011736669958683132 * altitude) + 1.2251486249604124);   // Obtain constants from Utilities/OpenRocket Extractors/air_density_extractor.py
+  float air_density = (-4.224962710944224e-14 * pow(altitude, 3) + 4.1628470681419666e-09 * pow(altitude, 2) + (-0.00011736669958683132 * altitude) + 1.2251486249604124);  // Obtain constants from Utilities/OpenRocket Extractors/air_density_extractor.py
 
   // Mass and thrust as a function of time - changing with motor burn
   float mass = get_mass(launch_clock);
@@ -909,7 +915,7 @@ void get_trolled_idiot() {
   thrust = thrust * thrust_modulation;
 
   // Change in time [seconds]
-  double dt = (curr_time - clock_time) / (double) 1000000;
+  double dt = (curr_time - clock_time) / (double)1000000;
 
   // After T-0, calculate acceleration from applied forces
   if (launch_clock > 0) {
@@ -917,19 +923,19 @@ void get_trolled_idiot() {
     perpendicular_acceleration = (gravity(altitude) * sin(degrees_to_radians(launch_angle)));
   }
 
-      // --- Drag ---
-  
+  // --- Drag ---
+
   // Flip drag vector if velocity is negative so that it's always a dissipative force
   int dir = 1;
   if (velocity < 0) dir = -1;
 
   // TODO: Update area for new Outer Diameter when openrocket finalized
   // float A_ref = 0.009; (Now defined in Global Variable)         // Cross-section area of fuselage corresponding to OpenRocket reference area
-  float virtual_deflection = max((virtual_angle - 4.322) / (120 - 4.322), 0);                                                  // Map blade deflection angle to a [0, 1] ratio for math
-  float A_beavs = ((feet_to_meters(blade_length / 12) * feet_to_meters(blade_width / 12)) * 2) * virtual_deflection;           // Cross-section area of exposed BEAVS blades
+  float virtual_deflection = max((virtual_angle - 4.322) / (120 - 4.322), 0);                                         // Map blade deflection angle to a [0, 1] ratio for math
+  float A_beavs = ((feet_to_meters(blade_length / 12) * feet_to_meters(blade_width / 12)) * 2) * virtual_deflection;  // Cross-section area of exposed BEAVS blades
   // TODO: Adjust rudimentary drag equation with correction factors from Ansys Fluent comparison - using Utilities/drag_mapper.py
   float Cd_beavs = 4.8 * (sqrt(A_beavs / A_ref)) * blade_modulation;
-  float Cd = Cd_rocket + (Cd_beavs * (A_beavs / A_ref));                        // Total combined rocket drag coefficient
+  float Cd = Cd_rocket + (Cd_beavs * (A_beavs / A_ref));  // Total combined rocket drag coefficient
 
   // Calculate drag force and reapply to total instantaneous acceleration
   float Fd = (0.5 * air_density * (velocity * velocity) * Cd * A_ref) * dir;
@@ -949,12 +955,12 @@ void get_trolled_idiot() {
   double dh = ((velocity * dt) * cos(degrees_to_radians(launch_angle)));  // From rotated coordinate system to vertical coordinate system
   // Adjust previous frame's instantaneous altitude by change in altitude
   altitude = altitude + dh;
-  if (altitude < launch_altitude) altitude = launch_altitude;     // oops don't fall through the floor !
+  if (altitude < launch_altitude) altitude = launch_altitude;  // oops don't fall through the floor !
 
 
   // Uncomment this block to fix flight conditions to post-launch without simulating burn:
-      // Hardcoded data from OpenRocket export at time of burnout
-      // Sim will hold until burnout, then release back to live sim as if engine burn is already complete
+  // Hardcoded data from OpenRocket export at time of burnout
+  // Sim will hold until burnout, then release back to live sim as if engine burn is already complete
 
   // if (launch_clock < (4.505) * 1000) {       // t_burnout = 4.505s (4505 ms)
   //   altitude = 796.68;
@@ -970,7 +976,7 @@ void get_trolled_idiot() {
   else if (commanded_angle < virtual_angle) virtual_angle = virtual_angle + max(commanded_angle - virtual_angle, -(150.0 / 1.41) * dt);
 
   // the big data dump
-  Serial.print((float) launch_clock / 1000.0);
+  Serial.print((float)launch_clock / 1000.0);
   Serial.print(" ");
   Serial.print(acceleration);
   Serial.print(" ");
@@ -1010,7 +1016,7 @@ void get_trolled_idiot() {
   Serial.println(flight_phase);
 
 
-          // Printing for csv output: not really needed anymore now that logging is available
+  // Printing for csv output: not really needed anymore now that logging is available
   // Serial.print((float) launch_clock / 1000.0);
   // Serial.print(",");
   // Serial.print(acceleration);
@@ -1023,7 +1029,7 @@ void get_trolled_idiot() {
 
 // Data interpolation functions
 
-float gravity(float altitude) {          // altitude [meters]
+float gravity(float altitude) {  // altitude [meters]
   // Range of polynomial validity
   if (altitude < 1380.00067880291) return 9.800601153885829;
   if (altitude > 6575.6628767) return 9.784637022898936;
@@ -1031,11 +1037,11 @@ float gravity(float altitude) {          // altitude [meters]
   // These constants are obtained from ../Utilities/OpenRocket Extractors/gravity_extractor.py using the OpenRocket simulation
   double consts[] = {
     1.9820614413562718e-22,   // P1
-    -5.3066518070855185e-18,   // P2
-    5.398468733344706e-14,   // P3
+    -5.3066518070855185e-18,  // P2
+    5.398468733344706e-14,    // P3
     -2.610086439273407e-10,   // P4
-    -2.4859764599374713e-06,   // P5
-    9.804405246460368,   // P6
+    -2.4859764599374713e-06,  // P5
+    9.804405246460368,        // P6
   };
 
   int poly_order = 5;
@@ -1043,10 +1049,10 @@ float gravity(float altitude) {          // altitude [meters]
 
   // pain
   for (int i = 0; i < poly_order + 1; i++) {
-    result = result + ((double) pow(altitude, poly_order - i) * consts[i]);
+    result = result + ((double)pow(altitude, poly_order - i) * consts[i]);
   }
 
-  return (float) result;
+  return (float)result;
 }
 
 float get_Cd(float mach) {
@@ -1061,27 +1067,615 @@ float get_Cd(float mach) {
   }
 
   // These interpolation values are obtained from Utilities/OpenRocket Extractors/drag_curve.py
-  double machValues[302] = { 0.101, 0.102, 0.104, 0.105, 0.107, 0.108, 0.11, 0.111, 0.113, 0.114, 0.116, 0.117, 0.119, 0.12, 0.122, 0.124, 0.125, 0.127, 0.128, 0.13, 0.131, 0.133, 0.134, 0.136, 0.137, 0.139, 0.141, 0.142, 
-  0.144, 0.145, 0.147, 0.149, 0.15, 0.152, 0.153, 0.155, 0.157, 0.158, 0.16, 0.161, 0.163, 0.165, 0.166, 0.168, 0.169, 0.171, 0.173, 0.174, 0.176, 0.178, 0.179, 0.181, 0.183, 0.184, 0.186, 0.187, 0.189, 0.191, 0.192, 0.194, 
-  0.196, 0.197, 0.199, 0.201, 0.203, 0.204, 0.206, 0.208, 0.209, 0.211, 0.213, 0.214, 0.216, 0.218, 0.22, 0.221, 0.223, 0.225, 0.227, 0.228, 0.23, 0.232, 0.234, 0.235, 0.237, 0.239, 0.241, 0.242, 0.244, 0.246, 0.248, 0.25, 
-  0.251, 0.253, 0.255, 0.257, 0.259, 0.261, 0.262, 0.264, 0.266, 0.268, 0.27, 0.272, 0.274, 0.275, 0.277, 0.279, 0.281, 0.283, 0.285, 0.287, 0.289, 0.291, 0.293, 0.295, 0.297, 0.299, 0.301, 0.303, 0.305, 0.306, 0.308, 0.31, 
-  0.313, 0.315, 0.317, 0.319, 0.321, 0.323, 0.325, 0.327, 0.329, 0.331, 0.333, 0.335, 0.337, 0.339, 0.341, 0.344, 0.346, 0.348, 0.35, 0.352, 0.354, 0.357, 0.359, 0.361, 0.363, 0.366, 0.368, 0.37, 0.372, 0.375, 0.377, 
-  0.379, 0.381, 0.384, 0.386, 0.389, 0.391, 0.393, 0.396, 0.398, 0.401, 0.403, 0.405, 0.408, 0.41, 0.413, 0.415, 0.418, 0.42, 0.423, 0.425, 0.428, 0.431, 0.433, 0.436, 0.439, 0.441, 0.444, 0.447, 0.449, 0.452, 0.455, 0.458,
-  0.46, 0.463, 0.466, 0.469, 0.472, 0.475, 0.478, 0.48, 0.483, 0.486, 0.489, 0.492, 0.496, 0.499, 0.502, 0.505, 0.508, 0.511, 0.514, 0.518, 0.521, 0.524, 0.527, 0.531, 0.534, 0.538, 0.541, 0.544, 0.548, 0.551, 0.555, 0.559,
-  0.562, 0.566, 0.57, 0.573, 0.577, 0.581, 0.585, 0.589, 0.593, 0.597, 0.601, 0.605, 0.609, 0.613, 0.617, 0.622, 0.626, 0.63, 0.635, 0.639, 0.644, 0.648, 0.653, 0.658, 0.663, 0.668, 0.672, 0.677, 0.682, 0.688, 0.693, 0.698, 
-  0.703, 0.709, 0.714, 0.72, 0.726, 0.732, 0.737, 0.743, 0.749, 0.756, 0.762, 0.768, 0.775, 0.782, 0.788, 0.795, 0.802, 0.81, 0.817, 0.825, 0.832, 0.84, 0.848, 0.856, 0.865, 0.873, 0.882, 0.891, 0.901, 0.91, 0.92, 0.93, 0.941, 
-  0.951, 0.962, 0.974, 0.986, 0.998, 1.01, 1.023, 1.037, 1.051, 1.065, 1.08, 1.093, 1.101, 1.107, 1.111, 1.114, 1.116, 1.117, };
+  double machValues[302] = {
+    0.101,
+    0.102,
+    0.104,
+    0.105,
+    0.107,
+    0.108,
+    0.11,
+    0.111,
+    0.113,
+    0.114,
+    0.116,
+    0.117,
+    0.119,
+    0.12,
+    0.122,
+    0.124,
+    0.125,
+    0.127,
+    0.128,
+    0.13,
+    0.131,
+    0.133,
+    0.134,
+    0.136,
+    0.137,
+    0.139,
+    0.141,
+    0.142,
+    0.144,
+    0.145,
+    0.147,
+    0.149,
+    0.15,
+    0.152,
+    0.153,
+    0.155,
+    0.157,
+    0.158,
+    0.16,
+    0.161,
+    0.163,
+    0.165,
+    0.166,
+    0.168,
+    0.169,
+    0.171,
+    0.173,
+    0.174,
+    0.176,
+    0.178,
+    0.179,
+    0.181,
+    0.183,
+    0.184,
+    0.186,
+    0.187,
+    0.189,
+    0.191,
+    0.192,
+    0.194,
+    0.196,
+    0.197,
+    0.199,
+    0.201,
+    0.203,
+    0.204,
+    0.206,
+    0.208,
+    0.209,
+    0.211,
+    0.213,
+    0.214,
+    0.216,
+    0.218,
+    0.22,
+    0.221,
+    0.223,
+    0.225,
+    0.227,
+    0.228,
+    0.23,
+    0.232,
+    0.234,
+    0.235,
+    0.237,
+    0.239,
+    0.241,
+    0.242,
+    0.244,
+    0.246,
+    0.248,
+    0.25,
+    0.251,
+    0.253,
+    0.255,
+    0.257,
+    0.259,
+    0.261,
+    0.262,
+    0.264,
+    0.266,
+    0.268,
+    0.27,
+    0.272,
+    0.274,
+    0.275,
+    0.277,
+    0.279,
+    0.281,
+    0.283,
+    0.285,
+    0.287,
+    0.289,
+    0.291,
+    0.293,
+    0.295,
+    0.297,
+    0.299,
+    0.301,
+    0.303,
+    0.305,
+    0.306,
+    0.308,
+    0.31,
+    0.313,
+    0.315,
+    0.317,
+    0.319,
+    0.321,
+    0.323,
+    0.325,
+    0.327,
+    0.329,
+    0.331,
+    0.333,
+    0.335,
+    0.337,
+    0.339,
+    0.341,
+    0.344,
+    0.346,
+    0.348,
+    0.35,
+    0.352,
+    0.354,
+    0.357,
+    0.359,
+    0.361,
+    0.363,
+    0.366,
+    0.368,
+    0.37,
+    0.372,
+    0.375,
+    0.377,
+    0.379,
+    0.381,
+    0.384,
+    0.386,
+    0.389,
+    0.391,
+    0.393,
+    0.396,
+    0.398,
+    0.401,
+    0.403,
+    0.405,
+    0.408,
+    0.41,
+    0.413,
+    0.415,
+    0.418,
+    0.42,
+    0.423,
+    0.425,
+    0.428,
+    0.431,
+    0.433,
+    0.436,
+    0.439,
+    0.441,
+    0.444,
+    0.447,
+    0.449,
+    0.452,
+    0.455,
+    0.458,
+    0.46,
+    0.463,
+    0.466,
+    0.469,
+    0.472,
+    0.475,
+    0.478,
+    0.48,
+    0.483,
+    0.486,
+    0.489,
+    0.492,
+    0.496,
+    0.499,
+    0.502,
+    0.505,
+    0.508,
+    0.511,
+    0.514,
+    0.518,
+    0.521,
+    0.524,
+    0.527,
+    0.531,
+    0.534,
+    0.538,
+    0.541,
+    0.544,
+    0.548,
+    0.551,
+    0.555,
+    0.559,
+    0.562,
+    0.566,
+    0.57,
+    0.573,
+    0.577,
+    0.581,
+    0.585,
+    0.589,
+    0.593,
+    0.597,
+    0.601,
+    0.605,
+    0.609,
+    0.613,
+    0.617,
+    0.622,
+    0.626,
+    0.63,
+    0.635,
+    0.639,
+    0.644,
+    0.648,
+    0.653,
+    0.658,
+    0.663,
+    0.668,
+    0.672,
+    0.677,
+    0.682,
+    0.688,
+    0.693,
+    0.698,
+    0.703,
+    0.709,
+    0.714,
+    0.72,
+    0.726,
+    0.732,
+    0.737,
+    0.743,
+    0.749,
+    0.756,
+    0.762,
+    0.768,
+    0.775,
+    0.782,
+    0.788,
+    0.795,
+    0.802,
+    0.81,
+    0.817,
+    0.825,
+    0.832,
+    0.84,
+    0.848,
+    0.856,
+    0.865,
+    0.873,
+    0.882,
+    0.891,
+    0.901,
+    0.91,
+    0.92,
+    0.93,
+    0.941,
+    0.951,
+    0.962,
+    0.974,
+    0.986,
+    0.998,
+    1.01,
+    1.023,
+    1.037,
+    1.051,
+    1.065,
+    1.08,
+    1.093,
+    1.101,
+    1.107,
+    1.111,
+    1.114,
+    1.116,
+    1.117,
+  };
 
-  double cdValues[302] = { 0.601, 0.601, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.599, 0.599, 0.599, 0.599, 0.599, 0.599, 0.599, 0.599, 0.598, 0.598, 0.598, 0.598, 0.598, 0.598, 0.598, 0.598, 0.598, 0.598, 0.598, 0.598, 0.598, 0.598,
-  0.598, 0.598, 0.598, 0.598, 0.598, 0.598, 0.598, 0.598, 0.598, 0.598, 0.598, 0.599, 0.599, 0.599, 0.599, 0.599, 0.599, 0.599, 0.599, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.601, 0.601, 0.601, 0.601, 0.601, 0.601, 0.602, 
-  0.602, 0.602, 0.602, 0.603, 0.603, 0.603, 0.603, 0.604, 0.604, 0.604, 0.604, 0.605, 0.605, 0.605, 0.605, 0.606, 0.606, 0.606, 0.607, 0.607, 0.607, 0.607, 0.608, 0.608, 0.608, 0.609, 0.609, 0.609, 0.61, 0.61, 0.61, 0.611,
-  0.611, 0.612, 0.612, 0.612, 0.613, 0.613, 0.614, 0.614, 0.614, 0.615, 0.615, 0.616, 0.616, 0.617, 0.617, 0.618, 0.618, 0.618, 0.619, 0.619, 0.62, 0.62, 0.621, 0.621, 0.622, 0.622, 0.623, 0.623, 0.624, 0.624, 0.625, 0.626,
-  0.626, 0.627, 0.627, 0.628, 0.628, 0.629, 0.63, 0.63, 0.631, 0.631, 0.632, 0.633, 0.633, 0.634, 0.635, 0.635, 0.636, 0.637, 0.637, 0.638, 0.639, 0.639, 0.64, 0.641, 0.642, 0.642, 0.643, 0.644, 0.645, 0.645, 0.646, 0.647,
-  0.648, 0.648, 0.649, 0.65, 0.651, 0.652, 0.653, 0.653, 0.654, 0.655, 0.656, 0.657, 0.658, 0.659, 0.66, 0.661, 0.662, 0.663, 0.664, 0.665, 0.666, 0.667, 0.668, 0.669, 0.67, 0.671, 0.672, 0.673, 0.674, 0.675, 0.676, 0.677,
-  0.679, 0.68, 0.681, 0.682, 0.683, 0.685, 0.686, 0.687, 0.688, 0.69, 0.691, 0.692, 0.694, 0.695, 0.697, 0.698, 0.699, 0.701, 0.702, 0.704, 0.705, 0.707, 0.708, 0.71, 0.712, 0.713, 0.715, 0.717, 0.718, 0.72, 0.722, 0.724,
-  0.726, 0.727, 0.729, 0.731, 0.733, 0.735, 0.737, 0.739, 0.741, 0.743, 0.746, 0.748, 0.75, 0.752, 0.755, 0.757, 0.759, 0.762, 0.764, 0.767, 0.77, 0.772, 0.775, 0.778, 0.781, 0.784, 0.787, 0.79, 0.793, 0.796, 0.799, 0.803,
-  0.806, 0.809, 0.813, 0.817, 0.821, 0.825, 0.829, 0.834, 0.838, 0.843, 0.847, 0.852, 0.857, 0.863, 0.868, 0.874, 0.879, 0.885, 0.891, 0.898, 0.905, 0.912, 0.92, 0.927, 0.935, 0.944, 0.952, 0.961, 0.97, 0.98, 0.992, 
-  1.004, 1.017, 1.03, 1.039, 1.046, 1.052, 1.058, 1.063, 1.067, 1.069, 1.071, 1.072, 1.072, 1.073, 1.073, 1.073, };
+  double cdValues[302] = {
+    0.601,
+    0.601,
+    0.6,
+    0.6,
+    0.6,
+    0.6,
+    0.6,
+    0.6,
+    0.599,
+    0.599,
+    0.599,
+    0.599,
+    0.599,
+    0.599,
+    0.599,
+    0.599,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.598,
+    0.599,
+    0.599,
+    0.599,
+    0.599,
+    0.599,
+    0.599,
+    0.599,
+    0.599,
+    0.6,
+    0.6,
+    0.6,
+    0.6,
+    0.6,
+    0.6,
+    0.6,
+    0.601,
+    0.601,
+    0.601,
+    0.601,
+    0.601,
+    0.601,
+    0.602,
+    0.602,
+    0.602,
+    0.602,
+    0.603,
+    0.603,
+    0.603,
+    0.603,
+    0.604,
+    0.604,
+    0.604,
+    0.604,
+    0.605,
+    0.605,
+    0.605,
+    0.605,
+    0.606,
+    0.606,
+    0.606,
+    0.607,
+    0.607,
+    0.607,
+    0.607,
+    0.608,
+    0.608,
+    0.608,
+    0.609,
+    0.609,
+    0.609,
+    0.61,
+    0.61,
+    0.61,
+    0.611,
+    0.611,
+    0.612,
+    0.612,
+    0.612,
+    0.613,
+    0.613,
+    0.614,
+    0.614,
+    0.614,
+    0.615,
+    0.615,
+    0.616,
+    0.616,
+    0.617,
+    0.617,
+    0.618,
+    0.618,
+    0.618,
+    0.619,
+    0.619,
+    0.62,
+    0.62,
+    0.621,
+    0.621,
+    0.622,
+    0.622,
+    0.623,
+    0.623,
+    0.624,
+    0.624,
+    0.625,
+    0.626,
+    0.626,
+    0.627,
+    0.627,
+    0.628,
+    0.628,
+    0.629,
+    0.63,
+    0.63,
+    0.631,
+    0.631,
+    0.632,
+    0.633,
+    0.633,
+    0.634,
+    0.635,
+    0.635,
+    0.636,
+    0.637,
+    0.637,
+    0.638,
+    0.639,
+    0.639,
+    0.64,
+    0.641,
+    0.642,
+    0.642,
+    0.643,
+    0.644,
+    0.645,
+    0.645,
+    0.646,
+    0.647,
+    0.648,
+    0.648,
+    0.649,
+    0.65,
+    0.651,
+    0.652,
+    0.653,
+    0.653,
+    0.654,
+    0.655,
+    0.656,
+    0.657,
+    0.658,
+    0.659,
+    0.66,
+    0.661,
+    0.662,
+    0.663,
+    0.664,
+    0.665,
+    0.666,
+    0.667,
+    0.668,
+    0.669,
+    0.67,
+    0.671,
+    0.672,
+    0.673,
+    0.674,
+    0.675,
+    0.676,
+    0.677,
+    0.679,
+    0.68,
+    0.681,
+    0.682,
+    0.683,
+    0.685,
+    0.686,
+    0.687,
+    0.688,
+    0.69,
+    0.691,
+    0.692,
+    0.694,
+    0.695,
+    0.697,
+    0.698,
+    0.699,
+    0.701,
+    0.702,
+    0.704,
+    0.705,
+    0.707,
+    0.708,
+    0.71,
+    0.712,
+    0.713,
+    0.715,
+    0.717,
+    0.718,
+    0.72,
+    0.722,
+    0.724,
+    0.726,
+    0.727,
+    0.729,
+    0.731,
+    0.733,
+    0.735,
+    0.737,
+    0.739,
+    0.741,
+    0.743,
+    0.746,
+    0.748,
+    0.75,
+    0.752,
+    0.755,
+    0.757,
+    0.759,
+    0.762,
+    0.764,
+    0.767,
+    0.77,
+    0.772,
+    0.775,
+    0.778,
+    0.781,
+    0.784,
+    0.787,
+    0.79,
+    0.793,
+    0.796,
+    0.799,
+    0.803,
+    0.806,
+    0.809,
+    0.813,
+    0.817,
+    0.821,
+    0.825,
+    0.829,
+    0.834,
+    0.838,
+    0.843,
+    0.847,
+    0.852,
+    0.857,
+    0.863,
+    0.868,
+    0.874,
+    0.879,
+    0.885,
+    0.891,
+    0.898,
+    0.905,
+    0.912,
+    0.92,
+    0.927,
+    0.935,
+    0.944,
+    0.952,
+    0.961,
+    0.97,
+    0.98,
+    0.992,
+    1.004,
+    1.017,
+    1.03,
+    1.039,
+    1.046,
+    1.052,
+    1.058,
+    1.063,
+    1.067,
+    1.069,
+    1.071,
+    1.072,
+    1.072,
+    1.073,
+    1.073,
+    1.073,
+  };
 
   float Cd = Interpolation::Linear(machValues, cdValues, 435, mach, false);
 
@@ -1092,25 +1686,226 @@ float get_thrust(float time) {
   // Range of validity
   if (time < 0) return 0;
   if (time > 3000) return 0;
-  
+
   // These interpolation values are obtained from Utilities/OpenRocket Extractors/thrust_extractor.py
-  double timeValues[103] = { 0.0, 4.0, 11.0, 21.0, 31.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0, 120.0, 130.0, 140.0, 150.0, 160.0, 170.0, 180.0, 190.0, 195.0, 202.0, 212.0, 227.0, 249.0, 281.0,
-  296.0, 318.0, 351.0, 372.0, 403.0, 416.0, 435.0, 465.0, 508.0, 558.0, 600.0, 650.0, 700.0, 750.0, 788.0, 838.0, 888.0, 938.0, 988.0, 1038.0, 1066.0, 1108.0, 1158.0, 1208.0, 1258.0, 1261.0, 1266.0, 1272.0,
-  1282.0, 1298.0, 1320.0, 1355.0, 1405.0, 1455.0, 1507.0, 1557.0, 1607.0, 1657.0, 1707.0, 1746.0, 1796.0, 1846.0, 1865.0, 1894.0, 1936.0, 1986.0, 1995.0, 2008.0, 2028.0, 2057.0, 2093.0, 2143.0, 2158.0, 2181.0,
-  2214.0, 2263.0, 2313.0, 2363.0, 2389.0, 2428.0, 2478.0, 2528.0, 2577.0, 2627.0, 2677.0, 2693.0, 2717.0, 2753.0, 2761.0, 2773.0, 2791.0, 2818.0, 2858.0, 2908.0, 2958.0, 3000.0, };
-  
-  double thrustValues[103] = { 0.0, 10.664, 1268.961, 1287.347, 1305.732, 1322.279, 1316.087, 1309.896, 1303.704, 1297.512, 1291.32, 1285.129, 1278.937, 1272.745, 1266.553, 1260.362, 1254.17, 1247.978, 1241.786,
-  1235.595, 1229.403, 1226.307, 1232.231, 1240.13, 1251.978, 1268.961, 1250.669, 1242.303, 1245.407, 1250.063, 1252.966, 1226.644, 1215.644, 1216.771, 1218.462, 1220.999, 1223.896, 1226.307, 1223.471, 1220.635, 1217.799,
-  1215.644, 1209.89, 1204.136, 1198.383, 1192.629, 1186.875, 1183.653, 1180.208, 1176.107, 1172.005, 1167.904, 1167.658, 1166.878, 1165.707, 1163.952, 1161.318, 1157.368, 1151.443, 1142.774, 1134.104, 1125.004, 1117.196,
-  1109.388, 1101.58, 1093.771, 1087.681, 1071.999, 1056.318, 1050.359, 1049.19, 1047.437, 1045.386, 1045.027, 1027.175, 1000.397, 960.231, 911.733, 784.591, 746.448, 705.317, 643.621, 554.504, 495.262, 436.021, 405.215,
-  360.973, 304.252, 247.531, 191.944, 145.98, 100.016, 85.308, 70.254, 47.672, 42.654, 40.512, 37.3, 32.481, 25.253, 16.33, 7.406, 0.0, };
+  double timeValues[103] = {
+    0.0,
+    4.0,
+    11.0,
+    21.0,
+    31.0,
+    40.0,
+    50.0,
+    60.0,
+    70.0,
+    80.0,
+    90.0,
+    100.0,
+    110.0,
+    120.0,
+    130.0,
+    140.0,
+    150.0,
+    160.0,
+    170.0,
+    180.0,
+    190.0,
+    195.0,
+    202.0,
+    212.0,
+    227.0,
+    249.0,
+    281.0,
+    296.0,
+    318.0,
+    351.0,
+    372.0,
+    403.0,
+    416.0,
+    435.0,
+    465.0,
+    508.0,
+    558.0,
+    600.0,
+    650.0,
+    700.0,
+    750.0,
+    788.0,
+    838.0,
+    888.0,
+    938.0,
+    988.0,
+    1038.0,
+    1066.0,
+    1108.0,
+    1158.0,
+    1208.0,
+    1258.0,
+    1261.0,
+    1266.0,
+    1272.0,
+    1282.0,
+    1298.0,
+    1320.0,
+    1355.0,
+    1405.0,
+    1455.0,
+    1507.0,
+    1557.0,
+    1607.0,
+    1657.0,
+    1707.0,
+    1746.0,
+    1796.0,
+    1846.0,
+    1865.0,
+    1894.0,
+    1936.0,
+    1986.0,
+    1995.0,
+    2008.0,
+    2028.0,
+    2057.0,
+    2093.0,
+    2143.0,
+    2158.0,
+    2181.0,
+    2214.0,
+    2263.0,
+    2313.0,
+    2363.0,
+    2389.0,
+    2428.0,
+    2478.0,
+    2528.0,
+    2577.0,
+    2627.0,
+    2677.0,
+    2693.0,
+    2717.0,
+    2753.0,
+    2761.0,
+    2773.0,
+    2791.0,
+    2818.0,
+    2858.0,
+    2908.0,
+    2958.0,
+    3000.0,
+  };
+
+  double thrustValues[103] = {
+    0.0,
+    10.664,
+    1268.961,
+    1287.347,
+    1305.732,
+    1322.279,
+    1316.087,
+    1309.896,
+    1303.704,
+    1297.512,
+    1291.32,
+    1285.129,
+    1278.937,
+    1272.745,
+    1266.553,
+    1260.362,
+    1254.17,
+    1247.978,
+    1241.786,
+    1235.595,
+    1229.403,
+    1226.307,
+    1232.231,
+    1240.13,
+    1251.978,
+    1268.961,
+    1250.669,
+    1242.303,
+    1245.407,
+    1250.063,
+    1252.966,
+    1226.644,
+    1215.644,
+    1216.771,
+    1218.462,
+    1220.999,
+    1223.896,
+    1226.307,
+    1223.471,
+    1220.635,
+    1217.799,
+    1215.644,
+    1209.89,
+    1204.136,
+    1198.383,
+    1192.629,
+    1186.875,
+    1183.653,
+    1180.208,
+    1176.107,
+    1172.005,
+    1167.904,
+    1167.658,
+    1166.878,
+    1165.707,
+    1163.952,
+    1161.318,
+    1157.368,
+    1151.443,
+    1142.774,
+    1134.104,
+    1125.004,
+    1117.196,
+    1109.388,
+    1101.58,
+    1093.771,
+    1087.681,
+    1071.999,
+    1056.318,
+    1050.359,
+    1049.19,
+    1047.437,
+    1045.386,
+    1045.027,
+    1027.175,
+    1000.397,
+    960.231,
+    911.733,
+    784.591,
+    746.448,
+    705.317,
+    643.621,
+    554.504,
+    495.262,
+    436.021,
+    405.215,
+    360.973,
+    304.252,
+    247.531,
+    191.944,
+    145.98,
+    100.016,
+    85.308,
+    70.254,
+    47.672,
+    42.654,
+    40.512,
+    37.3,
+    32.481,
+    25.253,
+    16.33,
+    7.406,
+    0.0,
+  };
 
   float thrust = Interpolation::Linear(timeValues, thrustValues, 138, time, true);
 
   return thrust;
 }
 
-float get_mass(float time) { // [ms]
+float get_mass(float time) {  // [ms]
   // Range of polynomial validity
   if (time < 0.0) return 7.976;
   if (time > 3000.0) return 6.576;
@@ -1140,10 +1935,10 @@ float get_mass(float time) { // [ms]
 
   // pain
   for (int i = 0; i < poly_order + 1; i++) {
-    result = result + ((double) pow(time, poly_order - i) * consts[i]);
+    result = result + ((double)pow(time, poly_order - i) * consts[i]);
   }
 
-  return (float) result;
+  return (float)result;
 }
 
 
