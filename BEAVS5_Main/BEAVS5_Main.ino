@@ -720,7 +720,7 @@ void calculate_telemetry() {
   // TODO: Merge this with get_beavs_drag function or something idk
   // float A_ref = 0.009; (now defined in Global Variable)
   float virtual_deflection = max((virtual_angle - 4.322) / (120 - 4.322), 0); // Convert deflection angle to ratio
-  float A_Beavs = ((feet_to_meters(blade_length / 12) * feet_to_meters(blade_width / 12)) * 2) * virtual_deflection;
+  float A_beavs = ((feet_to_meters(blade_length / 12) * feet_to_meters(blade_width / 12)) * 2) * virtual_deflection;
   
   float speed_of_sound = get_speed_of_sound(altitude);
   float Mach = abs(velocity) / speed_of_sound;
@@ -1138,7 +1138,7 @@ float get_air_density(float altitude) { // [meters]
 
   // pain
   for (int i = 0; i < poly_order + 1; i++) {
-    result = result + ((double) pow(time, poly_order - i) * consts[i]);
+    result = result + ((double) pow(altitude, poly_order - i) * consts[i]);
   }
 
   return (float) result;
