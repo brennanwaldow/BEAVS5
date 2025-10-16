@@ -57,7 +57,7 @@ enum { PIN_ARMING,
 // TODO: SET TO FIELD/ACTIVE/PIN_ARMING before COMPETITION FLIGHT; or FIELD/DATA_COLLECTION/PIN_ARMING for subscale drag validation flight
 int BEAVS_mode = SIM;
 int BEAVS_control = DATA_COLLECTION;
-int BEAVS_arming = TIMER_ARMING;
+int BEAVS_arming = PIN_ARMING;
 
 
 // Aerodynamics Configuration
@@ -697,11 +697,11 @@ void collect_telemetry() {
 
     // TODO: 3-axis -> magnitude?
     sensors_event_t* accelerometer_event = &accelerometer;
-    accelerometer_event->type == SENSOR_TYPE_LINEAR_ACCELERATION;
+    accelerometer_event->type = SENSOR_TYPE_LINEAR_ACCELERATION;
     acceleration = accelerometer_event->acceleration.z;
 
     sensors_event_t* gyro_event = &gyroscope;
-    gyro_event->type == SENSOR_TYPE_ORIENTATION;
+    gyro_event->type = SENSOR_TYPE_ORIENTATION;
 
     float new_roll = gyro_event->orientation.x;
 
@@ -783,7 +783,7 @@ void calculate_telemetry() {
   float l = sqrt((l1 * l1) + (l2 * l2));
 
   // funny thing to make sure i dont divide by zero during flight lmfao
-  if (h = 0) {
+  if (h == 0) {
     // if h = 0, angle vector is perfectly aligned with x/y plane, meaning it is 90 degrees rotated from z-axis vertical
     pitch_angle = 90;
   } else {
