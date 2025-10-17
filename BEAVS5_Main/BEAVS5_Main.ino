@@ -179,7 +179,7 @@ long datacoll_timer = 0;  // [ms]
 //float datacoll_extension = 12.5;        // [%]
 
 int extension_index = 0;               // [#]
-float extensions[] = { .3, .5, .9 };   // [%]
+float extensions[] = { .4, .5, .57 };   // [%]
 float waits[] = { 2, 2, 2, 2, 2, 2 };  // [s]
 //t=0 u=0,t=0.5 u=.3, dt=3
 
@@ -376,6 +376,7 @@ void disarmed_loop(int core) {
       if (millis() - interupt_time > 5 * 1000) {
         arm();
       } else {
+        preflight();
       }
     }
     //mason wants this to be a little bit out
@@ -384,7 +385,7 @@ void disarmed_loop(int core) {
     // disable telemetry write on ground for final flight
     //write_telemetry();
 
-    if (acceleration > 10) launch();
+    //if (acceleration > 10) launch();
   } else if (core == 2) {
   }
 }
@@ -434,7 +435,7 @@ void coast_loop(int core) {
           u = extensions[extension_index / 2];
           command_deflection(u);
         } else {
-          command_deflection(0);
+          command_deflection(0.3);
         }
         if (extension_index < max_extension_index - 1) {
           extension_index += 1;
@@ -521,7 +522,7 @@ void arm() {
       delay(2000);
       command_deflection(0.5);
       delay(1000);
-      command_deflection(0);
+      command_deflection(0.3);
     }
   } else if (BEAVS_mode == SIM) {
     log("BEAVS running in SIM mode.");
@@ -534,17 +535,17 @@ void arm() {
       delay(500);
       command_deflection(0);
       delay(500);
-      command_deflection(0.3);
+      command_deflection(0.4);
       delay(500);
       command_deflection(0);
       delay(500);
-      command_deflection(0.3);
+      command_deflection(0.5);
       delay(500);
       command_deflection(0);
       delay(500);
-      command_deflection(0.3);
+      command_deflection(0.57);
       delay(500);
-      command_deflection(0);
+      command_deflection(0.3);
       delay(500);
     }
   }
@@ -952,12 +953,13 @@ void get_trolled_idiot() {
     // Adjust previous frame's instanteous velocity by the change in velocity
     velocity = velocity + dv;
     perpendicular_velocity = perpendicular_velocity + dv_perpendicular;
-  }
+  
 
   // Calculate change in altitude from instantaneous velocity
   double dh = ((velocity * dt) * cos(degrees_to_radians(launch_angle)));  // From rotated coordinate system to vertical coordinate system
   // Adjust previous frame's instantaneous altitude by change in altitude
   altitude = altitude + dh;
+  }
   if (altitude < launch_altitude) altitude = launch_altitude;  // oops don't fall through the floor !
 
 
