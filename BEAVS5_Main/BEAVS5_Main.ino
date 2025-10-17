@@ -55,7 +55,7 @@ enum { PIN_ARMING,
 // TIMER_ARMING -- Timer automatically engages ARMED phase after boot, ONLY to be used for testing / simulation
 
 // TODO: SET TO FIELD/ACTIVE/PIN_ARMING before COMPETITION FLIGHT; or FIELD/DATA_COLLECTION/PIN_ARMING for subscale drag validation flight
-int BEAVS_mode = SIM;
+int BEAVS_mode = FIELD ;
 int BEAVS_control = DATA_COLLECTION;
 int BEAVS_arming = PIN_ARMING;
 
@@ -511,11 +511,11 @@ void arm() {
       delay(2000);
       command_deflection(0.5);
       delay(1000);
-      command_deflection(0);
+      command_deflection(0.3);
       delay(3000);
-      command_deflection(1);
+      command_deflection(0.57);
       delay(2000);
-      command_deflection(0);
+      command_deflection(0.3);// od size
     } else if (BEAVS_control == ACTIVE) {
       log("BEAVS control mode: ACTIVE.");
       command_deflection(1);
@@ -742,6 +742,9 @@ void collect_telemetry() {
     Serial.print(acceleration);
     Serial.print(" ");
     Serial.println(velocity);
+    Serial.print(" ");
+    Serial.println(flight_phase);
+
   }
 }
 
