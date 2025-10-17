@@ -413,7 +413,7 @@ void flight_loop(int core) {
     calculate_telemetry();
     write_telemetry();
 
-    if (acceleration < 5) coast();
+    if (acceleration < -5) coast();\\untested
   } else if (core == 2) {
   }
 }
