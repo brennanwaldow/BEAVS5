@@ -490,6 +490,7 @@ void descend_loop(int core) {
 // -----   Phase Changeovers   -----
 void arm() {
   // SAFETY PIN REMOVED: Arm BEAVS monitoring and initiate startup
+  last_reset=millis();
   flight_phase = ARMED;
 
   log("Safety pin removed. BEAVS arming.");
