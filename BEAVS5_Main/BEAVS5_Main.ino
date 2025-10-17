@@ -92,10 +92,6 @@ bool BMP_failure = true;
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 bool BNO_failure = true;
 
-// Servo
-int servo_pin = 28;         // GPIO 28 / Physical Pin 34
-int servo_mosfet_pin = 27;  // GPIO 27 / Physical Pin 32
-
 // SD
 SdFs SD;
 FsFile log_file;
@@ -105,10 +101,17 @@ String log_filename;
 String telemetry_filename;
 bool SD_failure = true;
 
+// PIN Definitions (All GPIO numbers. Consult pinout for physical pin numbers)
+const int SERVO_pin_PWM = 28;      
+const int SERVO_pin_ENABLE = 27;
+
 const int SD_pin_MISO = 16;
 const int SD_pin_MOSI = 19;
 const int SD_pin_CS = 17;
 const int SD_pin_SCK = 18;
+
+const int ARMING_pin = 21;
+
 
 #define SPI_CLOCK SD_SCK_MHZ(50)
 #define SD_CONFIG SdSpiConfig(SD_pin_CS, DEDICATED_SPI, SPI_CLOCK)
@@ -180,8 +183,7 @@ float extensions[] = { .3, .5, .9 };   // [%]
 float waits[] = { 2, 2, 2, 2, 2, 2 };  // [s]
 //t=0 u=0,t=0.5 u=.3, dt=3
 
-float interupt_time = 0;
-bool interrupt_pin = 21;
+long interupt_time = 0;
 
 int max_extension_index = sizeof(waits) / sizeof(float);
 
@@ -232,10 +234,10 @@ void setup() {
   }
   bno.setExtCrystalUse(true);
 
-  pinMode(servo_pin, OUTPUT);
+  pinMode(SERVO_pin_PWM, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
 
-  pinMode(servo_mosfet_pin, OUTPUT);
+  pinMode(SERVO_pin_ENABLE, OUTPUT);
 
   // Initialize SD card
   bool setRX(SD_pin_MISO);
@@ -353,7 +355,7 @@ void preflight_loop(int core) {
     if (BEAVS_arming == TIMER_ARMING) {
       if (millis() > 3000) arm();
     } else {
-      if (digitalRead(interrupt_pin) == 1) {
+      if (digitalRead(ARMING_pin) == 1) {
         interupt_time = millis();
         boot();
       }
@@ -370,7 +372,7 @@ void preflight_loop(int core) {
 
 void disarmed_loop(int core) {
   if (core == 1) {
-    if (digitalRead(interrupt_pin) == 0) {
+    if (digitalRead(ARMING_pin) == 0) {
       if (millis() - interupt_time > 5 * 1000) {
         arm();
       } else {
@@ -389,7 +391,7 @@ void disarmed_loop(int core) {
 
 void ready_loop(int core) {
   if (core == 1) {
-    if (digitalRead(interrupt_pin) == 1) {
+    if (digitalRead(ARMING_pin) == 1) {
       interupt_time = millis();
       disarm();
     }
@@ -479,7 +481,7 @@ void descend_loop(int core) {
       log_terminated = true;
 
       // Unpower servo to aid in de-integration
-      digitalWrite(servo_mosfet_pin, LOW);
+      digitalWrite(SERVO_pin_ENABLE, LOW);
     }
   } else if (core == 2) {
   }
@@ -496,7 +498,7 @@ void arm() {
   log("Safety pin removed. BEAVS arming.");
 
   // Power servo MOSFET
-  digitalWrite(servo_mosfet_pin, HIGH);
+  digitalWrite(SERVO_pin_ENABLE, HIGH);
 
   if (BEAVS_control == STOWED) {
     log("BEAVS control: STOWED.");
@@ -847,9 +849,9 @@ void command_deflection(float deflection) {  // [ratio], 0 (flush) to 1 (full ex
   for (int i = 0; i <= 2; i++) {
     // A pulse each 20ms
 
-    digitalWrite(servo_pin, HIGH);
+    digitalWrite(SERVO_pin_PWM, HIGH);
     delayMicroseconds(x);
-    digitalWrite(servo_pin, LOW);
+    digitalWrite(SERVO_pin_PWM, LOW);
     delayMicroseconds(18550);
 
     // Pulses duration: 500 - 0deg; 1500 - 135deg; 2500 - 270deg
