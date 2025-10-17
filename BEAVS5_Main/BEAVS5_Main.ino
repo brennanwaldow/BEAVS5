@@ -183,8 +183,7 @@ float extensions[] = { .3, .5, .9 };   // [%]
 float waits[] = { 2, 2, 2, 2, 2, 2 };  // [s]
 //t=0 u=0,t=0.5 u=.3, dt=3
 
-float interupt_time = 0;
-
+long interupt_time = 0;
 
 int max_extension_index = sizeof(waits) / sizeof(float);
 
