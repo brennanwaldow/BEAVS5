@@ -418,7 +418,7 @@ void ready_loop(int core) {
     collect_telemetry();
     calculate_telemetry();
     // disable telemetry write on ground for final flight
-    //write_telemetry();
+    write_telemetry();
 
     if (acceleration > 10) {
       launch();
