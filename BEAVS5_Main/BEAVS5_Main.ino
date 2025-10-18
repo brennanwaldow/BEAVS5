@@ -216,6 +216,16 @@ void setup() {
 
   Wire.begin();
 
+  // GPIO Pin Setup
+  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(SERVO_pin_PWM, OUTPUT);
+  pinMode(SERVO_pin_ENABLE, OUTPUT);
+  pinMode(SD_pin_MISO, OUTPUT);
+  pinMode(SD_pin_MOSI, OUTPUT);
+  pinMode(SD_pin_CS, OUTPUT);
+  pinMode(SD_pin_SCK, OUTPUT);
+
+
   if (!bmp.begin_I2C(0x77)) {
     Serial.println("ERROR: BMP390 failed to initialize.");
   } else {
@@ -234,9 +244,6 @@ void setup() {
   }
   bno.setExtCrystalUse(true);
 
-  pinMode(SERVO_pin_PWM, OUTPUT);
-  pinMode(LED_BUILTIN, OUTPUT);
-
   for (int i = 0; i < 20; i++) {
     // Quick blink pico LED when in setup, past Serial setup
     digitalWrite(LED_BUILTIN, HIGH);
@@ -245,8 +252,6 @@ void setup() {
     delay(100);
   }
   delay(1000);
-
-  pinMode(SERVO_pin_ENABLE, OUTPUT);
 
   // Initialize SD card
   bool setRX(SD_pin_MISO);
