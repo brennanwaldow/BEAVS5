@@ -55,7 +55,7 @@ enum { PIN_ARMING,
 // TIMER_ARMING -- Timer automatically engages ARMED phase after boot, ONLY to be used for testing / simulation
 
 // TODO: SET TO FIELD/ACTIVE/PIN_ARMING before COMPETITION FLIGHT; or FIELD/DATA_COLLECTION/PIN_ARMING for subscale drag validation flight
-int BEAVS_mode = SIM ;
+int BEAVS_mode = FIELD ;
 int BEAVS_control = DATA_COLLECTION;
 int BEAVS_arming = PIN_ARMING;
 
