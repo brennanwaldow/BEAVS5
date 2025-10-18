@@ -101,7 +101,7 @@ String log_filename;
 String telemetry_filename;
 bool SD_failure = true;
 
-// PIN Definitions (All GPIO numbers. Consult pinout for physical pin numbers)
+// Pin Definitions (All GPIO numbers. Consult pinout for physical pin numbers)
 const int SERVO_pin_PWM = 28;      
 const int SERVO_pin_ENABLE = 27;
 
