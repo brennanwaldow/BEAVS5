@@ -179,7 +179,7 @@ long datacoll_timer = 0;  // [ms]
 //float datacoll_extension = 12.5;        // [%]
 
 int extension_index = 0;               // [#]
-float extensions[] = { .4, .5, .57 };   // [%]
+float extensions[] = { .5, .7, .87 };   // [%]
 float waits[] = { 2, 2, 2, 2, 2, 2 };  // [s]
 //t=0 u=0,t=0.5 u=.3, dt=3
 
