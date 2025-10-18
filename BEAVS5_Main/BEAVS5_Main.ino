@@ -507,22 +507,30 @@ void arm() {
   } else if (BEAVS_mode == FIELD) {
     if (BEAVS_control == DATA_COLLECTION) {
       log("BEAVS control mode: DATA COLLECTION.");
-      command_deflection(1);
-      delay(2000);
+      command_deflection(.7);
+      delay(1000);
+      command_deflection(0.3);
+      delay(1000);
       command_deflection(0.5);
       delay(1000);
       command_deflection(0.3);
-      delay(3000);
-      command_deflection(0.57);
-      delay(2000);
+      delay(1000);
+      command_deflection(0.7);
+      delay(1000);
       command_deflection(0.3);// od size
     } else if (BEAVS_control == ACTIVE) {
       log("BEAVS control mode: ACTIVE.");
-      command_deflection(1);
-      delay(2000);
-      command_deflection(0.5);
-      delay(1000);
+      command_deflection(.7);
+      delay(500);
       command_deflection(0.3);
+      delay(500);
+      command_deflection(0.5);
+      delay(500);
+      command_deflection(0.3);
+      delay(500);
+      command_deflection(0.7);
+      delay(500);
+      command_deflection(0.3);// od size
     }
   } else if (BEAVS_mode == SIM) {
     log("BEAVS running in SIM mode.");
