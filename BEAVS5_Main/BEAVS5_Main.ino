@@ -110,6 +110,11 @@ const int SD_pin_MOSI = 19;
 const int SD_pin_CS = 17;
 const int SD_pin_SCK = 18;
 
+const int LED_pin_IMU_OK = 0;
+const int LED_pin_BARO_OK = 1;
+const int LED_pin_uSD_OK = 2;
+const int LED_pin_RDY_FLY = 3;
+
 const int ARMING_pin = 21;
 
 
@@ -220,16 +225,17 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(SERVO_pin_PWM, OUTPUT);
   pinMode(SERVO_pin_ENABLE, OUTPUT);
-  pinMode(SD_pin_MISO, INPUT);
-  pinMode(SD_pin_MOSI, OUTPUT);
-  pinMode(SD_pin_CS, OUTPUT);
-  pinMode(SD_pin_SCK, OUTPUT);
+  pinMode(LED_pin_IMU_OK, OUTPUT);
+  pinMode(LED_pin_BARO_OK, OUTPUT);
+  pinMode(LED_pin_uSD_OK, OUTPUT);
+  pinMode(LED_pin_RDY_FLY, OUTPUT);
 
-
+  digitalWrite(LED_pin_BARO_OK, LOW);
   if (!bmp.begin_I2C(0x77)) {
     Serial.println("ERROR: BMP390 failed to initialize.");
   } else {
     BMP_failure = false;
+    digitalWrite(LED_pin_BARO_OK, HIGH);
   }
 
   bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
@@ -237,10 +243,12 @@ void setup() {
   bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
   bmp.setOutputDataRate(BMP3_ODR_50_HZ);
 
+  digitalWrite(LED_pin_IMU_OK, LOW);
   if (!bno.begin()) {
     Serial.println("ERROR: BNO055 failed to initialize.");
   } else {
     BNO_failure = false;
+    digitalWrite(LED_pin_IMU_OK, HIGH);
   }
   bno.setExtCrystalUse(true);
 
@@ -260,10 +268,12 @@ void setup() {
   bool sdInitialized = false;
   sdInitialized = SD.begin(SD_CONFIG);
 
+  digitalWrite(LED_pin_uSD_OK, LOW);
   if (!sdInitialized) {
     Serial.println("ERROR: SD card writer failed to initialize.");
   } else {
     SD_failure = false;
+    digitalWrite(LED_pin_uSD_OK, HIGH);
 
     // Search for the first available log slot
     for (int i = 1; i < 10000; i++) {
@@ -278,6 +288,8 @@ void setup() {
       write_telemetry_headers();
       break;
     }
+
+    digitalWrite(LED_pin_uSD_OK, LOW);
 
     log("Startup complete.");
   }
@@ -517,6 +529,7 @@ void arm() {
   last_reset=millis();
   flight_phase = ARMED;
 
+  digitalWrite(LED_pin_RDY_FLY, HIGH);
   log("Safety pin removed. BEAVS arming.");
 
   // Power servo MOSFET
@@ -600,6 +613,7 @@ void disarm() {
   // SAFETY PIN REINSERTED: Return to Disarmed state
   flight_phase = DISARMED;
   
+  digitalWrite(LED_pin_RDY_FLY, LOW);
   log("Safety pin reinserted. Disarming.");
 }
 
