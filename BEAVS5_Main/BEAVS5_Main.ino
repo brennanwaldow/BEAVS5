@@ -237,6 +237,23 @@ void setup() {
   pinMode(SERVO_pin_PWM, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
 
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(100);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(100);
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(100);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(100);
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(100);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(100);
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(100);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(100);
+
   pinMode(SERVO_pin_ENABLE, OUTPUT);
 
   // Initialize SD card
@@ -402,7 +419,10 @@ void ready_loop(int core) {
     // disable telemetry write on ground for final flight
     //write_telemetry();
 
-    if (acceleration > 10) launch();
+    if (acceleration > 10) {
+      launch();
+    }
+
   } else if (core == 2) {
   }
 }
@@ -413,7 +433,10 @@ void flight_loop(int core) {
     calculate_telemetry();
     write_telemetry();
 
-    if (acceleration < 5) coast();\\untested
+    if (acceleration < 5) {
+      coast(); //untested
+    }
+
   } else if (core == 2) {
   }
 }
