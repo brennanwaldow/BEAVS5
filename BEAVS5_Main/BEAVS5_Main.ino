@@ -220,7 +220,7 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(SERVO_pin_PWM, OUTPUT);
   pinMode(SERVO_pin_ENABLE, OUTPUT);
-  pinMode(SD_pin_MISO, OUTPUT);
+  pinMode(SD_pin_MISO, INPUT);
   pinMode(SD_pin_MOSI, OUTPUT);
   pinMode(SD_pin_CS, OUTPUT);
   pinMode(SD_pin_SCK, OUTPUT);
