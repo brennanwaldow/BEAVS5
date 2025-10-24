@@ -6,8 +6,10 @@ private:
   bool began = false;
 
 public:
-  TwoWire();
+  TwoWire() {};
   void begin();
+
+  bool began_s() const;
 };
 
 extern TwoWire Wire;

@@ -5,8 +5,8 @@
 #ifndef SIMULATION
 #include "bmp.h"
 #include "bno.h"
+#include "misc.h"
 #include "sdfat.h"
-#include "spi.h"
 #include "wire.h"
 #else
 #include <Adafruit_BMP3XX.h>

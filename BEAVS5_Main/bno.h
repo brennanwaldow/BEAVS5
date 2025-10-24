@@ -5,9 +5,13 @@
 
 #include "wire.h"
 
+typedef enum {
+  SENSOR_TYPE_ORIENTATION = (3),
+  SENSOR_TYPE_LINEAR_ACCELERATION = (10),
+} sensors_type_t;
+
 typedef struct {
   union {
-    float v[3];
     struct {
       float x;
       float y;
@@ -20,16 +24,21 @@ typedef struct {
     };
   };
   int8_t status;
-  uint8_t reserved[3];
 } sensors_vec_t;
 
 typedef struct {
   int32_t type;
+  sensors_vec_t acceleration;
   sensors_vec_t orientation;
-  sensors_vec_t gyro;
 } sensors_event_t;
 
 class Adafruit_BNO055 {
+private:
+  bool began = false;
+  bool extCrystal = false;
+
+  TwoWire *wire;
+
 public:
   typedef enum {
     BNO055_EULER_H_LSB_ADDR = 0X1A,
@@ -45,7 +54,7 @@ public:
 
   bool begin();
   void setExtCrystalUse(bool usextal);
-  bool getEvent(sensors_event_t *, adafruit_vector_type_t);
+  bool getEvent(sensors_event_t *event, adafruit_vector_type_t type);
 };
 
 #endif

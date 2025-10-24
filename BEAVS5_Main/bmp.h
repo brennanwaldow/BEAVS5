@@ -5,13 +5,20 @@
 
 #include "wire.h"
 
+#define BMP3_OVERSAMPLING_8X UINT8_C(0x03)
+#define BMP3_OVERSAMPLING_16X UINT8_C(0x04)
+#define BMP3_IIR_FILTER_COEFF_3 UINT8_C(0x02)
+#define BMP3_ODR_50_HZ UINT8_C(0x02)
+
 class Adafruit_BMP3XX {
+  bool began = false;
+
 public:
-  Adafruit_BMP3XX();
+  Adafruit_BMP3XX() {}
 
   bool begin_I2C(uint8_t addr, TwoWire *theWire = &Wire);
-  float readTemperature(void);
-  float readPressure(void);
+  float readTemperature();
+  float readPressure();
   float readAltitude(float seaLevel);
 
   bool setTemperatureOversampling(uint8_t os);
