@@ -8,12 +8,6 @@ Servo: DS3235
 */
 
 // -----   Libraries   -----
-#include <Wire.h>
-#include <SPI.h>
-#include <SdFat.h>
-#include <Adafruit_Sensor.h>
-#include "Adafruit_BMP3XX.h"
-#include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 #include "InterpolationLib.h"
 
