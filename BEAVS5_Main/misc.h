@@ -1,7 +1,6 @@
 #ifndef MISC_H
 #define MISC_H
 
-#include "sdfat.h"
 #include <cmath>
 #include <cstdint>
 #include <sstream>
