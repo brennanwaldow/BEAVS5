@@ -1,7 +1,8 @@
 CXX = g++
-TARGET = main
+TARGET = beavs.so
 CXXFLAGS = -std=c++20 -Wall -DSIMULATION
-BUILDFLAGS = -O3
+LINKFLAGS = -shared
+BUILDFLAGS = -fPIC -O3
 LDFLAGS = -lboost_context -lboost_system
 DEPFLAGS = -MMD -MP
 
@@ -19,11 +20,11 @@ DEPS = $(OBJECTS:.o=.d)
 
 build: $(TARGET)
 
-debug: BUILDFLAGS = -g
+debug: BUILDFLAGS += -g
 debug: build
 
 $(TARGET): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -shared -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp .buildflags.txt
 	$(CXX) $(CXXFLAGS) $(BUILDFLAGS) $(DEPFLAGS) -c $< -o $@

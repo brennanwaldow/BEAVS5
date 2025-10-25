@@ -1,5 +1,6 @@
 #include "misc.h"
 
+#include "loop.h"
 #include <cassert>
 #include <cstdio>
 #include <iomanip>
@@ -87,9 +88,7 @@ void delayMicroseconds(unsigned long value) {
     micros1_s += value;
   }
 
-  if (delay_callback_s != nullptr) {
-    delay_callback_s();
-  }
+  yield();
 }
 
 HardwareSerial_s Serial;

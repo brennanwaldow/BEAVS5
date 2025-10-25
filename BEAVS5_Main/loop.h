@@ -1,8 +1,8 @@
 #ifndef LOOP_H
 #define LOOP_H
 
-void run();
+void step_to(unsigned long long time);
 
-extern void (*callback)(unsigned long long);
+void yield();
 
 #endif

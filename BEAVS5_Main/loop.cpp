@@ -1,5 +1,6 @@
 #include "BEAVS5_Main.h"
 #include "misc.h"
+#include <algorithm>
 #include <boost/coroutine2/all.hpp>
 #include <boost/coroutine2/coroutine.hpp>
 #include <boost/coroutine2/detail/pull_coroutine.hpp>
@@ -16,8 +17,6 @@
 // performReading and maybe writing to the SD should have delay though.
 // TODO: Add noise simulation especially since some of the sensor have different
 // sampling rates.
-
-void (*callback)(unsigned long long time) = nullptr;
 
 // There may be a better way to do this. This is highly sus as push_type is not
 // assignable for a reason
@@ -46,7 +45,10 @@ void run1(boost::coroutines2::coroutine<void>::push_type &yield) {
   }
 }
 
-void ret() {
+boost::coroutines2::coroutine<void>::pull_type cpu0(run0);
+boost::coroutines2::coroutine<void>::pull_type cpu1(run1);
+
+void yield() {
   if (cpu_s == 0) {
     (*yield0)();
   } else {
@@ -54,24 +56,19 @@ void ret() {
   }
 }
 
-void run() {
-  assert(callback != nullptr);
-
-  delay_callback_s = ret;
-
-  boost::coroutines2::coroutine<void>::pull_type cpu0(run0);
-  boost::coroutines2::coroutine<void>::pull_type cpu1(run1);
-  while (true) {
-    if (micros0_s <= micros1_s) {
-      callback(micros0_s);
-
-      cpu_s = 0;
-      cpu0();
-    } else {
-      callback(micros1_s);
-
-      cpu_s = 1;
-      cpu1();
-    }
+unsigned long long step() {
+  if (micros0_s <= micros1_s) {
+    cpu_s = 0;
+    cpu0();
+  } else {
+    cpu_s = 1;
+    cpu1();
   }
+
+  return std::min(micros0_s, micros1_s);
+}
+
+void step_to(unsigned long long time) {
+  while (time > step())
+    ;
 }
