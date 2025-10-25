@@ -1,6 +1,7 @@
 CXX = g++
 TARGET = main
 CXXFLAGS = -std=c++20 -Wall -DSIMULATION
+BUILDFLAGS = -O3
 LDFLAGS = -lboost_context -lboost_system
 DEPFLAGS = -MMD -MP
 
@@ -14,20 +15,32 @@ OBJECTS = $(CPP_OBJECTS) $(INO_OBJECTS)
 
 DEPS = $(OBJECTS:.o=.d)
 
-.PHONY: all clean
+.PHONY: build debug clean .FORCE
 
-all: $(TARGET)
+build: $(TARGET)
+
+debug: BUILDFLAGS = -g
+debug: build
 
 $(TARGET): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@
+%.o: %.cpp .buildflags.txt
+	$(CXX) $(CXXFLAGS) $(BUILDFLAGS) $(DEPFLAGS) -c $< -o $@
 
-%.o: %.ino
-	$(CXX) $(CXXFLAGS) $(DEPFLAGS) -x c++ -c $< -o $@
+%.o: %.ino .buildflags.txt
+	$(CXX) $(CXXFLAGS) $(BUILDFLAGS) $(DEPFLAGS) -x c++ -c $< -o $@
+
+.buildflags.txt: .FORCE
+	@printf "%b" "$(BUILDFLAGS)" > .buildflags.txt.tmp
+	@if ! cmp -s .buildflags.txt.tmp .buildflags.txt 2>/dev/null; then \
+		mv .buildflags.txt.tmp .buildflags.txt; \
+	else \
+		rm .buildflags.txt.tmp; \
+	fi
+
 
 -include $(DEPS)
 
 clean:
-	rm -f $(TARGET) $(OBJECTS) $(DEPS)
+	rm -f $(TARGET) $(OBJECTS) $(DEPS) .buildflags.txt
