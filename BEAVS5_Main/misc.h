@@ -1,9 +1,41 @@
-#ifndef SERIAL_H
-#define SERIAL_H
+#ifndef MISC_H
+#define MISC_H
 
+#include <cmath>
+#include <stdint.h>
 #include <string>
 
-typedef std::string String;
+#define HIGH 0x1
+#define LOW 0x0
+
+#define OUTPUT 0x1
+
+#define LED_BUILTIN 13
+
+std::string to_precision(double x, unsigned char decimalPlaces);
+
+// This sucks
+// The constructors should really be explicit, but whatever
+class String : public std::string {
+public:
+  String() : std::string() {}
+  String(const std::string &str) : std::string(str) {}
+  String(const char *str) : std::string(str) {}
+
+  String(char c) : std::string(1, c) {}
+  String(unsigned char x) : std::string(std::to_string(x)) {}
+  String(int x) : std::string(std::to_string(x)) {}
+  String(unsigned int x) : std::string(std::to_string(x)) {}
+  String(long x) : std::string(std::to_string(x)) {}
+  String(unsigned long x) : std::string(std::to_string(x)) {}
+  String(float x, unsigned char decimalPlaces = 2)
+      : std::string(to_precision(x, decimalPlaces)) {}
+  String(double x, unsigned char decimalPlaces = 2)
+      : std::string(to_precision(x, decimalPlaces)) {}
+
+  String operator+(const char *rhs) const;
+  String operator+(const String &rhs) const;
+};
 
 class HardwareSerial_s {
 private:
@@ -15,9 +47,25 @@ public:
   bool begin(unsigned long baud);
 
   void print(const String &str);
+  void print(float x, unsigned char decimalPlaces);
   void println(const String &str);
 };
 
+unsigned long millis();
+unsigned long micros();
+void pinMode(uint8_t, uint8_t);
+void digitalWrite(uint8_t, uint8_t);
+int digitalRead(uint8_t);
+void delay(unsigned long);
+void delayMicroseconds(unsigned long);
+
 extern HardwareSerial_s Serial;
+
+using std::atan;
+using std::cos;
+using std::pow;
+using std::round;
+using std::sin;
+using std::sqrt;
 
 #endif

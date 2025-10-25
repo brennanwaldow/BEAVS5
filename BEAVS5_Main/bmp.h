@@ -25,6 +25,8 @@ public:
   bool setPressureOversampling(uint8_t os);
   bool setIIRFilterCoeff(uint8_t fs);
   bool setOutputDataRate(uint8_t odr);
+
+  bool performReading();
 };
 
 #endif

@@ -35,7 +35,7 @@ bool SdFs::begin(SdSpiConfig spiConfig) {
 bool SdFs::mkdir(const String &path_str, bool pFlag) {
   assert(began);
 
-  std::filesystem::path path(path_str);
+  std::filesystem::path path(path_str.c_str());
 
   return mkdir(path, pFlag);
 }
@@ -61,7 +61,7 @@ bool SdFs::mkdir(const std::filesystem::path &path, bool pFlag) {
 bool SdFs::exists(const String &path_str) const {
   assert(began);
 
-  std::filesystem::path path(path_str);
+  std::filesystem::path path(path_str.c_str());
 
   return exists(path);
 }
@@ -78,7 +78,7 @@ FsFile SdFs::open(const String &path_str, oflag_t oflag) {
     return FsFile();
   }
 
-  std::filesystem::path path(path_str);
+  std::filesystem::path path(path_str.c_str());
 
   if (dirs.contains(path)) {
     return FsFile();

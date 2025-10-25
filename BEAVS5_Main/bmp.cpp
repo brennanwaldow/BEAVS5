@@ -54,3 +54,9 @@ bool Adafruit_BMP3XX::setOutputDataRate(uint8_t odr) {
 
   return true;
 }
+
+bool Adafruit_BMP3XX::performReading() {
+  assert(began);
+
+  return true;
+}

@@ -9,8 +9,6 @@ Servo: DS3235
 
 // -----   Libraries   -----
 #include "stub.h"
-// #include <utility/imumaths.h>
-// #include "InterpolationLib.h"
 
 
 // Utility
@@ -1169,7 +1167,7 @@ float get_air_density(float altitude) { // [meters]
 
   // pain
   for (int i = 0; i < poly_order + 1; i++) {
-    result = result + ((double) pow(time, poly_order - i) * consts[i]);
+    result = result + ((double) pow(altitude, poly_order - i) * consts[i]);
   }
 
   return (float) result;
