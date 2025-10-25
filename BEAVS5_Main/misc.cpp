@@ -31,14 +31,15 @@ bool HardwareSerial_s::begin(unsigned long baud) {
   return true;
 }
 
-void HardwareSerial_s::print(const String &str) { std::cout << str; }
+void HardwareSerial_s::print(const String &str) { data_s << str; }
 
 void HardwareSerial_s::print(float x, unsigned char decimalPlaces) {
-  std::cout << String(x, decimalPlaces);
+  data_s << String(x, decimalPlaces);
 }
 
 void HardwareSerial_s::println(const String &str) {
-  std::cout << str << std::endl;
+  // I think the \r\n is correct over endl, but IDK
+  data_s << str << "\r\n";
 }
 
 unsigned long millis() { return micros() / 1000; }

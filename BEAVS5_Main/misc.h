@@ -1,8 +1,10 @@
 #ifndef MISC_H
 #define MISC_H
 
+#include "sdfat.h"
 #include <cmath>
 #include <cstdint>
+#include <sstream>
 #include <stdint.h>
 #include <string>
 
@@ -51,6 +53,8 @@ public:
   void print(const String &str);
   void print(float x, unsigned char decimalPlaces);
   void println(const String &str);
+
+  std::stringstream data_s;
 };
 
 struct Pin_s {
