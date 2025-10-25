@@ -76,7 +76,7 @@ using std::round;
 using std::sin;
 using std::sqrt;
 
-const int pin_count_s = 21;
+const int pin_count_s = 29;
 extern unsigned long long micros_s;
 extern Pin_s pins_s[pin_count_s];
 extern void (*delay_callback_s)();

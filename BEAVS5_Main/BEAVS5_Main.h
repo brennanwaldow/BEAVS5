@@ -1,5 +1,5 @@
-#ifndef DELCARES_H
-#define DELCARES_H
+#ifndef BEAVS_H
+#define BEAVS_H
 
 #include "misc.h"
 
@@ -44,5 +44,11 @@ float get_thrust(float time);
 
 float get_Fd_BEAVS(float velocity, float Cd_BEAVS, float A_BEAVS,
                    float air_density);
+
+void setup();
+void setup1();
+
+void loop();
+void loop1();
 
 #endif

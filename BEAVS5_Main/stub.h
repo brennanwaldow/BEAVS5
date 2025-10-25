@@ -1,12 +1,11 @@
 #ifndef STUB_H
 #define STUB_H
 
-// TODO: change ifndef
-#ifndef SIMULATION
+#ifdef SIMULATION
+#include "BEAVS5_Main.h"
 #include "InterpolationLib.h"
 #include "bmp.h"
 #include "bno.h"
-#include "declares.h"
 #include "misc.h"
 #include "sdfat.h"
 #include "wire.h"

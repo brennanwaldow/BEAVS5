@@ -1,6 +1,7 @@
 #include "misc.h"
 
 #include <cassert>
+#include <cstdio>
 #include <iomanip>
 #include <iostream>
 #include <ostream>

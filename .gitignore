@@ -1,6 +1,8 @@
 /.vscode
 BEAVS5_Main/compile_commands.json
 BEAVS5_Main/*.o
+BEAVS5_Main/*.d
 BEAVS5_Main/.cache
+BEAVS5_Main/main
 
 
