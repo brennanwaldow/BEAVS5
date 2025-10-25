@@ -1,6 +1,7 @@
 CXX = g++
 TARGET = main
 CXXFLAGS = -std=c++20 -Wall -DSIMULATION
+LDFLAGS = -lboost_context -lboost_system
 DEPFLAGS = -MMD -MP
 
 CPP_SOURCES = $(wildcard *.cpp)
@@ -18,7 +19,7 @@ DEPS = $(OBJECTS:.o=.d)
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@

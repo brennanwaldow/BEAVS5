@@ -77,8 +77,11 @@ using std::sin;
 using std::sqrt;
 
 const int pin_count_s = 29;
-extern unsigned long long micros_s;
+extern unsigned long long micros0_s;
+extern unsigned long long micros1_s;
 extern Pin_s pins_s[pin_count_s];
+
+extern int cpu_s;
 extern void (*delay_callback_s)();
 
 extern HardwareSerial_s Serial;

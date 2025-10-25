@@ -304,30 +304,6 @@ void loop() {
 
 // Core 2
 void loop1() {
-  switch(flight_phase) {
-    case PREFLIGHT:
-      preflight_loop(2);
-      break;
-    case DISARMED:
-      disarmed_loop(2);
-      break;
-    case ARMED:
-      ready_loop(2);
-      break;
-    case FLIGHT:
-      flight_loop(2);
-      break;
-    case OVERSHOOT:
-      overshoot_loop(2);
-      break;
-    case COAST:
-      coast_loop(2);
-      break;
-    case DESCENT:
-      descend_loop(2);
-      break;
-  }
-
   delay(5);
 }
 

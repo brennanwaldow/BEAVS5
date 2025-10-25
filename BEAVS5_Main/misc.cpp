@@ -6,8 +6,11 @@
 #include <iostream>
 #include <ostream>
 
-unsigned long long micros_s = 0;
+unsigned long long micros0_s = 0;
+unsigned long long micros1_s = 0;
 Pin_s pins_s[pin_count_s] = {};
+
+int cpu_s = 0;
 void (*delay_callback_s)() = nullptr;
 
 std::string to_precision(double x, unsigned char decimalPlaces) {
@@ -45,7 +48,13 @@ void HardwareSerial_s::println(const String &str) {
 
 unsigned long millis() { return micros() / 1000; }
 
-unsigned long micros() { return micros_s; }
+unsigned long micros() {
+  if (cpu_s == 0) {
+    return micros0_s;
+  } else {
+    return micros1_s;
+  }
+}
 
 void pinMode(uint8_t pin, uint8_t mode) {
   assert(pin < pin_count_s);
@@ -72,7 +81,11 @@ int digitalRead(uint8_t pin) {
 void delay(unsigned long value) { delayMicroseconds(value * 1000); }
 
 void delayMicroseconds(unsigned long value) {
-  micros_s += value;
+  if (cpu_s == 0) {
+    micros0_s += value;
+  } else {
+    micros1_s += value;
+  }
 
   if (delay_callback_s != nullptr) {
     delay_callback_s();
