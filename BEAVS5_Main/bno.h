@@ -32,6 +32,7 @@ typedef struct {
   sensors_vec_t orientation;
 } sensors_event_t;
 
+// TODO: Finish this to specs
 class Adafruit_BNO055 {
 private:
   bool began = false;
@@ -56,5 +57,8 @@ public:
   void setExtCrystalUse(bool usextal);
   bool getEvent(sensors_event_t *event, adafruit_vector_type_t type);
 };
+
+extern sensors_vec_t acc_state_s;
+extern sensors_vec_t gyro_state_s;
 
 #endif

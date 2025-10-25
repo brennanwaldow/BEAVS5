@@ -5,6 +5,10 @@
 #include <iostream>
 #include <ostream>
 
+unsigned long long micros_s = 0;
+Pin_s pins_s[pin_count_s] = {};
+void (*delay_callback_s)() = nullptr;
+
 std::string to_precision(double x, unsigned char decimalPlaces) {
   std::stringstream stream;
   stream << std::fixed << std::setprecision(decimalPlaces) << x;
@@ -37,18 +41,40 @@ void HardwareSerial_s::println(const String &str) {
   std::cout << str << std::endl;
 }
 
-unsigned long millis() { return 0; }
+unsigned long millis() { return micros() / 1000; }
 
-unsigned long micros() { return 0; }
+unsigned long micros() { return micros_s; }
 
-void pinMode(uint8_t, uint8_t) {}
+void pinMode(uint8_t pin, uint8_t mode) {
+  assert(pin < pin_count_s);
+  assert(mode == OUTPUT || mode == INPUT);
 
-void digitalWrite(uint8_t, uint8_t) {}
+  pins_s[pin].mode = mode;
+}
 
-int digitalRead(uint8_t) { return 0; }
+void digitalWrite(uint8_t pin, uint8_t value) {
+  assert(pin < pin_count_s);
+  assert(value == LOW || value == HIGH);
+  assert(pins_s[pin].mode == OUTPUT);
 
-void delay(unsigned long) {}
+  pins_s[pin].value = value;
+}
 
-void delayMicroseconds(unsigned long) {}
+int digitalRead(uint8_t pin) {
+  assert(pin < pin_count_s);
+  assert(pins_s[pin].mode == INPUT);
+
+  return pins_s[pin].value;
+}
+
+void delay(unsigned long value) { delayMicroseconds(value * 1000); }
+
+void delayMicroseconds(unsigned long value) {
+  micros_s += value;
+
+  if (delay_callback_s != nullptr) {
+    delay_callback_s();
+  }
+}
 
 HardwareSerial_s Serial;

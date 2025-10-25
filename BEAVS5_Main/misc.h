@@ -2,12 +2,14 @@
 #define MISC_H
 
 #include <cmath>
+#include <cstdint>
 #include <stdint.h>
 #include <string>
 
-#define HIGH 0x1
 #define LOW 0x0
+#define HIGH 0x1
 
+#define INPUT 0x0
 #define OUTPUT 0x1
 
 #define LED_BUILTIN 13
@@ -51,6 +53,11 @@ public:
   void println(const String &str);
 };
 
+struct Pin_s {
+  uint8_t mode;
+  uint8_t value;
+};
+
 unsigned long millis();
 unsigned long micros();
 void pinMode(uint8_t, uint8_t);
@@ -59,13 +66,18 @@ int digitalRead(uint8_t);
 void delay(unsigned long);
 void delayMicroseconds(unsigned long);
 
-extern HardwareSerial_s Serial;
-
 using std::atan;
 using std::cos;
 using std::pow;
 using std::round;
 using std::sin;
 using std::sqrt;
+
+const int pin_count_s = 21;
+extern unsigned long long micros_s;
+extern Pin_s pins_s[pin_count_s];
+extern void (*delay_callback_s)();
+
+extern HardwareSerial_s Serial;
 
 #endif

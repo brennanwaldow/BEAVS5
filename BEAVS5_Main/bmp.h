@@ -10,6 +10,8 @@
 #define BMP3_IIR_FILTER_COEFF_3 UINT8_C(0x02)
 #define BMP3_ODR_50_HZ UINT8_C(0x02)
 
+// TODO: Finish this to specs. Currently all the non-read functions do nothing
+// and the performReading should call block based on the settings input.
 class Adafruit_BMP3XX {
   bool began = false;
 
@@ -28,5 +30,9 @@ public:
 
   bool performReading();
 };
+
+extern float tempurature_s;
+extern float pressure_s;
+extern float altitude_s;
 
 #endif

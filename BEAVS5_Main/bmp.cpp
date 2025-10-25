@@ -3,6 +3,10 @@
 #include "wire.h"
 #include <cassert>
 
+float tempurature_s = 0.0F;
+float pressure_s = 0.0F;
+float altitude_s = 0.0F;
+
 bool Adafruit_BMP3XX::begin_I2C(uint8_t addr, TwoWire *theWire) {
   assert(!began);
   assert(addr == 0x77);
@@ -16,19 +20,19 @@ bool Adafruit_BMP3XX::begin_I2C(uint8_t addr, TwoWire *theWire) {
 float Adafruit_BMP3XX::readTemperature() {
   assert(began);
 
-  return 0.0F;
+  return tempurature_s;
 }
 
 float Adafruit_BMP3XX::readPressure(void) {
   assert(began);
 
-  return 0.0F;
+  return pressure_s;
 }
 
 float Adafruit_BMP3XX::readAltitude(float seaLevel) {
   assert(began);
 
-  return 0.0F;
+  return pressure_s;
 }
 
 bool Adafruit_BMP3XX::setTemperatureOversampling(uint8_t os) {
