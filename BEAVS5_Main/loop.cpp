@@ -22,8 +22,10 @@
 // assignable for a reason
 // The functions return immediatly because they are run on init of the cpu0 and
 // cpu1 so the first call is just to init
-boost::coroutines2::coroutine<void>::push_type *yield0;
-boost::coroutines2::coroutine<void>::push_type *yield1;
+boost::coroutines2::coroutine<void>::push_type *yield0 = nullptr;
+boost::coroutines2::coroutine<void>::push_type *yield1 = nullptr;
+
+unsigned long long micros_s = 0;
 
 void run0(boost::coroutines2::coroutine<void>::push_type &yield) {
   yield0 = &yield;
@@ -56,7 +58,7 @@ void yield() {
   }
 }
 
-unsigned long long step() {
+void step() {
   if (micros0_s <= micros1_s) {
     cpu_s = 0;
     cpu0();
@@ -65,10 +67,13 @@ unsigned long long step() {
     cpu1();
   }
 
-  return std::min(micros0_s, micros1_s);
+  micros_s = std::min(micros0_s, micros1_s);
 }
 
-void step_to(unsigned long long time) {
-  while (time > step())
-    ;
+extern "C" void step_to(unsigned long long time) {
+  while (time > micros_s) {
+    step();
+  }
 }
+
+void step_by(unsigned long long time) { step_to(micros_s + time); }
