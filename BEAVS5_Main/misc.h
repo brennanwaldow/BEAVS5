@@ -7,14 +7,6 @@
 #include <stdint.h>
 #include <string>
 
-#define LOW 0x0
-#define HIGH 0x1
-
-#define INPUT 0x0
-#define OUTPUT 0x1
-
-#define LED_BUILTIN 13
-
 std::string to_precision(double x, unsigned char decimalPlaces);
 
 // This sucks
@@ -61,28 +53,11 @@ struct Pin_s {
   uint8_t value;
 };
 
-unsigned long millis();
-unsigned long micros();
-void pinMode(uint8_t, uint8_t);
-void digitalWrite(uint8_t, uint8_t);
-int digitalRead(uint8_t);
-void delay(unsigned long);
-void delayMicroseconds(unsigned long);
-
 using std::atan;
 using std::cos;
 using std::pow;
 using std::round;
 using std::sin;
 using std::sqrt;
-
-const int pin_count_s = 29;
-extern unsigned long long micros0_s;
-extern unsigned long long micros1_s;
-extern Pin_s pins_s[pin_count_s];
-
-extern int cpu_s;
-
-extern HardwareSerial_s Serial;
 
 #endif

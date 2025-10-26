@@ -8,7 +8,14 @@ Servo: DS3235
 */
 
 // -----   Libraries   -----
-#include "stub.h"
+#include "InterpolationLib.h"
+#include <Adafruit_BMP3XX.h>
+#include <Adafruit_BNO055.h>
+#include <Adafruit_Sensor.h>
+#include <SPI.h>
+#include <SdFat.h>
+#include <Wire.h>
+#include <utility/imumaths.h>
 
 
 // Utility
@@ -160,8 +167,8 @@ long datacoll_timer = 0;                // [ms]
 //float datacoll_extension = 12.5;        // [%]
 
 int extension_index=0;                       // [#]
-float extensions[]={.3,.5,.9};    // [%]
-float waits[]={2,2,2,2,2,2};      // [s]
+float extensions[3]={.3,.5,.9};    // [%]
+float waits[6]={2,2,2,2,2,2};      // [s]
 //t=0 u=0,t=0.5 u=.3, dt=3  
 
 float interupt_time=0;

@@ -1,0 +1,41 @@
+#include "InterpolationLib.h"
+#include "bmp.h"
+#include "bno.h"
+#include "misc.h"
+#include "sdfat.h"
+#include "wire.h"
+
+class Sim_s;
+
+------
+
+  Board(Sim_s *sim) : sim_s(sim) {}
+private:
+  Sim_s *sim_s;
+
+public:
+  unsigned long millis();
+  unsigned long micros();
+  void pinMode(uint8_t pin, uint8_t mode);
+  void digitalWrite(uint8_t pin, uint8_t value);
+  int digitalRead(uint8_t pin);
+  void delay(unsigned long value);
+  void delayMicroseconds(unsigned long value);
+
+  HardwareSerial_s Serial;
+
+------
+
+#include "sim.h"
+
+unsigned long Board::millis() { return sim_s->millis(); }
+unsigned long Board::micros() { return sim_s->micros(); }
+void Board::pinMode(uint8_t pin, uint8_t mode) { sim_s->pinMode(pin, mode); }
+void Board::digitalWrite(uint8_t pin, uint8_t value) { sim_s->digitalWrite(pin, value); }
+int Board::digitalRead(uint8_t pin) { return sim_s->digitalRead(pin); }
+void Board::delay(unsigned long value) { sim_s->delay(value); }
+void Board::delayMicroseconds(unsigned long value) { sim_s->delayMicroseconds(value); }
+
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
+
