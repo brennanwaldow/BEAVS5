@@ -7,6 +7,14 @@
 #include <stdint.h>
 #include <string>
 
+#define LOW 0x0
+#define HIGH 0x1
+
+#define INPUT 0x0
+#define OUTPUT 0x1
+
+#define LED_BUILTIN 13
+
 std::string to_precision(double x, unsigned char decimalPlaces);
 
 // This sucks

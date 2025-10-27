@@ -1,6 +1,6 @@
 CXX = g++
 TARGET = sim.so
-CXXFLAGS = -std=c++20 -Wall -DSIMULATION
+CXXFLAGS = -std=c++20 -Wall
 LINKFLAGS = -shared
 BUILDFLAGS = -fPIC -O3
 LDFLAGS = -lboost_context -lboost_system

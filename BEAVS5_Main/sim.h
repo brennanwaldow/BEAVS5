@@ -6,14 +6,6 @@
 #include <boost/coroutine2/all.hpp>
 #include <functional>
 
-#define LOW 0x0
-#define HIGH 0x1
-
-#define INPUT 0x0
-#define OUTPUT 0x1
-
-#define LED_BUILTIN 13
-
 const int pin_count_s = 29;
 
 class Sim_s {
@@ -28,7 +20,7 @@ class Sim_s {
 
   int cpu = 0;
 
-  Pin_s pins[pin_count_s];
+  Pin_s pins[pin_count_s] = {};
 
   void yield();
   void run0(boost::coroutines2::coroutine<void>::push_type &yield);
@@ -38,7 +30,9 @@ public:
   Sim_s()
       : cpu0(std::bind(&Sim_s::run0, this, std::placeholders::_1)),
         cpu1(std::bind(&Sim_s::run1, this, std::placeholders::_1)),
-        board_s(this) {};
+        board_s(this) {
+
+        };
 
   unsigned long millis();
   unsigned long micros();
