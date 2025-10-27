@@ -36,6 +36,7 @@ public:
   const uint32_t maxSck = SD_SCK_MHZ(50);
 };
 
+// TODO: Maybe use string stream
 struct File_s {
   std::vector<String> lines;
 };

@@ -17,8 +17,8 @@
 const int pin_count_s = 29;
 
 class Sim_s {
-  unsigned long long micros0;
-  unsigned long long micros1;
+  unsigned long long micros0 = 0;
+  unsigned long long micros1 = 0;
 
   boost::coroutines2::coroutine<void>::push_type *yield0 = nullptr;
   boost::coroutines2::coroutine<void>::push_type *yield1 = nullptr;
@@ -26,7 +26,7 @@ class Sim_s {
   boost::coroutines2::coroutine<void>::pull_type cpu0;
   boost::coroutines2::coroutine<void>::pull_type cpu1;
 
-  int cpu;
+  int cpu = 0;
 
   Pin_s pins[pin_count_s];
 
@@ -50,7 +50,7 @@ public:
 
   Board board_s;
 
-  unsigned long long micros_s;
+  unsigned long long micros_s = 0;
   Pin_s pins_s[pin_count_s] = {};
 
   void step();

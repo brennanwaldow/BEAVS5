@@ -1,5 +1,6 @@
 #include "sim.h"
 #include <algorithm>
+#include <cstdio>
 
 // TODO: Consider adding more callbacks. It would be good to figure out a way to
 // have sensor values changed even without delay because running code takes time
