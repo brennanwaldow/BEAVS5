@@ -35,7 +35,7 @@ void HardwareSerial_s::print(float x, unsigned char decimalPlaces) {
 }
 
 void HardwareSerial_s::println(const String &str) {
-  // I think the \r\n is correct over endl, but IDK
+  // I think the \r\n is correct over endl or \n, but IDK
   data_s << str << "\r\n";
 }
 

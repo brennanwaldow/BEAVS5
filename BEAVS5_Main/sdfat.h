@@ -5,10 +5,10 @@
 #include <cstddef>
 #include <filesystem>
 #include <memory>
+#include <sstream>
 #include <stdint.h>
 #include <unordered_map>
 #include <unordered_set>
-#include <vector>
 
 #define O_RDONLY 0X00
 #define O_WRONLY 0X01
@@ -36,9 +36,8 @@ public:
   const uint32_t maxSck = SD_SCK_MHZ(50);
 };
 
-// TODO: Maybe use string stream
 struct File_s {
-  std::vector<String> lines;
+  std::stringstream content;
 };
 
 // Less restrictive than normal FAT file

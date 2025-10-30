@@ -11,9 +11,9 @@ size_t FsFile::println(const String &str) {
     return 0;
   }
 
-  file->lines.push_back(str);
-
   // \r\n I think is the correct ending
+  file->content << str << "\r\n";
+
   return str.length() + 2;
 }
 
