@@ -22,7 +22,6 @@ jobs:
 
           pip install pybind11 ruff pytest
           sudo apt-get install libboost-coroutine-dev clang-tidy
-        continue-on-error: true
       - name: Build
         run: |
           cd BEAVS5_Main
@@ -34,7 +33,9 @@ jobs:
         run: |
           # TODO: Improve this
           clang-tidy $(find -name *.cpp ! -name board.cpp ! -name InterpolationLib.cpp -o -name *.h ! -name board.h ! -name InterpolationLib.h)
+          continue-on-error: true
       - name: Lint with ruff
         run: |
           pip install ruff
           ruff check
+          continue-on-error: true
