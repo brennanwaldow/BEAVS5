@@ -30,12 +30,11 @@ jobs:
         run: |
           pytest -v -s
       - name: Lint with clang-tidy
+        continue-on-error: true
         run: |
           # TODO: Improve this
           clang-tidy $(find -name *.cpp ! -name board.cpp ! -name InterpolationLib.cpp -o -name *.h ! -name board.h ! -name InterpolationLib.h)
-          continue-on-error: true
       - name: Lint with ruff
         run: |
           pip install ruff
           ruff check
-          continue-on-error: true
