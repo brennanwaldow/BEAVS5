@@ -21,18 +21,7 @@ jobs:
           pip install -r requirements.txt
 
           pip install pybind11 ruff pytest
-          sudo apt-get install libboost-coroutine-dev
-      - name: Lint with clang-tidy
-        uses: cpp-linter/cpp-linter-action@v6
-        with:
-          version: "20"
-          style: "Google"
-          tidy: true
-          extensions: "cpp,h"
-      - name: Lint with ruff
-        run: |
-          pip install ruff
-          ruff check
+          sudo apt-get install libboost-coroutine-dev clang-tidy
         continue-on-error: true
       - name: Build
         run: |
@@ -41,3 +30,11 @@ jobs:
       - name: Test with pytest
         run: |
           pytest -v -s
+      - name: Lint with clang-tidy
+        run: |
+          # TODO: Improve this
+          clang-tidy $(find -name *.cpp ! -name board.cpp ! -name InterpolationLib.cpp -o -name *.h ! -name board.h ! -name InterpolationLib.h)
+      - name: Lint with ruff
+        run: |
+          pip install ruff
+          ruff check
