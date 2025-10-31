@@ -43,13 +43,6 @@ class LogPhaseChange(Log):
 
 
 @dataclass
-class LogApogeeAltitude(Log):
-    max_height_m: float
-    max_height_ft: float
-
-
-# TODO: Make enum
-@dataclass
 class LogMessage(Log):
     message: str
 
@@ -58,6 +51,25 @@ class LogMessage(Log):
 class SerialLog(SerialLine):
     time: int
     log: Log
+
+
+@dataclass
+class SerialMessage(SerialLine):
+    message: str
+
+
+@dataclass
+class SerialTelemetry(SerialLine):
+    roll: float
+    roll_rel: float
+    pitch_x: float
+    pitch_y: float
+    pitch: float
+    altitude: float
+    prev_altitude: float
+    dt: float
+    acceleration: float
+    velocity: float
 
 
 def parse_log_text(text: str) -> Log | None:
@@ -78,20 +90,10 @@ def parse_log_text(text: str) -> Log | None:
     if text == "Apogee reached.":
         return LogPhaseChange(phase=FlightPhase.DESCENT)
 
-    apogee_res = parse(
-        "Altitude achieved: {max_height_m:g} m AGL    //    {max_height_ft:g} ft AGL",
-        text,
-    )
-    if apogee_res is not None:
-        return LogApogeeAltitude(
-            max_height_m=apogee_res["max_height_m"],
-            max_height_ft=apogee_res["max_height_ft"],
-        )
-
     return LogMessage(message=text)
 
 
-def parse_serial_line(rawline: bytes) -> SerialLine | None:
+def parse_serial_line(rawline: bytes) -> SerialLine:
     line = rawline.decode()
 
     if line == "Starting up hardware...":
@@ -109,3 +111,24 @@ def parse_serial_line(rawline: bytes) -> SerialLine | None:
     res = parse("[{time:g}s] {text}", line)
     if res is not None:
         return SerialLog(res["time"], parse_log_text(res["text"]))
+
+    res = parse(
+        "{roll:g} {roll_rel:g} {pitch_x:g} {pitch_y:g} {pitch:g} {altitude:g} {prev_altitude:g} {dt:g} {acceleration:g} {velocity:g}",
+        line,
+    )
+    if res is not None:
+        return SerialTelemetry(
+            res["roll"],
+            res["roll_rel"],
+            res["pitch_y"],
+            res["pitch_x"],
+            res["pitch"],
+            res["altitude"],
+            res["prev_altitude"],
+            res["dt"],
+            res["acceleration"],
+            res["velocity"],
+        )
+
+    print(len(line.split(" ")))
+    return SerialMessage(line)

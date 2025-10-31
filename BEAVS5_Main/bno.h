@@ -53,6 +53,9 @@ public:
 
   Adafruit_BNO055(int32_t sensorID, uint8_t address, TwoWire *theWire = &Wire);
 
+  sensors_vec_t acc_state_s = {};
+  sensors_vec_t gyro_state_s = {};
+
   bool begin();
   void setExtCrystalUse(bool usextal);
   bool getEvent(sensors_event_t *event, adafruit_vector_type_t type);

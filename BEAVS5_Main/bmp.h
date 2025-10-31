@@ -18,6 +18,10 @@ class Adafruit_BMP3XX {
 public:
   Adafruit_BMP3XX() {}
 
+  float tempurature_s = 0.0F;
+  float pressure_s = 0.0F;
+  float altitude_s = 0.0F;
+
   bool begin_I2C(uint8_t addr, TwoWire *theWire = &Wire);
   float readTemperature();
   float readPressure();

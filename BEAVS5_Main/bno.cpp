@@ -3,9 +3,6 @@
 #include "wire.h"
 #include <cassert>
 
-sensors_vec_t acc_state_s = {};
-sensors_vec_t gyro_state_s = {};
-
 Adafruit_BNO055::Adafruit_BNO055(int32_t sensorID, uint8_t address,
                                  TwoWire *theWire) {
   assert(!began);

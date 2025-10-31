@@ -27,12 +27,13 @@ class Sim_s {
   void run1(boost::coroutines2::coroutine<void>::push_type &yield);
 
 public:
+  // Maybe move to sim.cpp
   Sim_s()
       : cpu0(std::bind(&Sim_s::run0, this, std::placeholders::_1)),
         cpu1(std::bind(&Sim_s::run1, this, std::placeholders::_1)),
         board_s(this) {
-
-        };
+    board_s.BEAVS_mode = Board::FIELD;
+  };
 
   unsigned long millis();
   unsigned long micros();

@@ -331,7 +331,10 @@ void preflight_loop(int core) {
     // TODO: disable telemetry write on ground for final flight
     //write_telemetry();
   } else if (core == 2) {
-    preflight();
+    // This seems to be a bug so I commented it out
+    // As it sets the flight state to preflight
+    // If this runs at a weird time the rocket could stay in preflight
+    // preflight();
   }
 }
 
