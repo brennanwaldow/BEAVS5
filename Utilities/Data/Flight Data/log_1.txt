@@ -1,0 +1,25 @@
+[9.06s] Initiating logger with extension_index 1.
+[9.13s] Startup complete.
+[16.64s] Safety pin inserted. Booting to Disarmed.
+[26.39s] Safety pin removed. BEAVS arming.
+[26.42s] BEAVS control mode: DATA COLLECTION.
+[46.28s] Safety pin reinserted. Disarming.
+[47.01s] Safety pin removed quickly. Switching to preflight.
+[415.91s] Safety pin inserted. Booting to Disarmed.
+[422.14s] Safety pin removed. BEAVS arming.
+[422.18s] BEAVS control mode: DATA COLLECTION.
+[433.96s] Safety pin reinserted. Disarming.
+[434.88s] Safety pin removed quickly. Switching to preflight.
+[1285.06s] Safety pin inserted. Booting to Disarmed.
+[1326.51s] Safety pin removed. BEAVS arming.
+[1326.54s] BEAVS control mode: DATA COLLECTION.
+[1340.25s] Safety pin reinserted. Disarming.
+[1341.42s] Safety pin removed quickly. Switching to preflight.
+[4638.38s] Safety pin inserted. Booting to Disarmed.
+[11571.18s] Safety pin removed. BEAVS arming.
+[11571.21s] BEAVS control mode: DATA COLLECTION.
+[12285.08s] Motor ignition detected.
+[12287.47s] Coast phase entered, beginning deployment.
+[12287.68s] Apogee reached.
+[12287.71s] Altitude achieved: 429.56 m AGL   //   1409.30 ft AGL
+[12587.78s] Five minutes after apogee. Logging terminated.
