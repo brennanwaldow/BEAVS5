@@ -648,9 +648,8 @@ void collect_telemetry() {
     // Serial.println(altitude);
 
     // TODO: look more at this
-    double dt = (micros() - clock_time) / (double) 1000000;
+    double dt = (curr_time - clock_time) / (double) 1000000;
     velocity = (altitude - prev_altitude) / dt;
-    clock_time = micros();
 
     // BNO055
     sensors_event_t accelerometer, gyroscope;
