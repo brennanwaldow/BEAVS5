@@ -2,7 +2,7 @@ import csv
 from matplotlib import pyplot as plt
 import numpy as np
 
-dataset = 'subscale-L1000W'
+dataset = 'subscale_Brothers'
 target_apogee = 3048 # [m]
 
 # Note that while other extractors use a Launch Altitude offset, the lookup table is a function of HEIGHT, not ALTITUDE, so it remains unadjusted
@@ -20,7 +20,7 @@ with open('Utilities/Data/' + dataset + '_DataSet.csv', newline='') as csvfile:
         if (time == '# Time (s)'): continue
 
         time = float(time)
-        altitude = float(row[1])
+        altitude = float(row[1]) # AGL
         velocity = float(row[3])
         acceleration = float(row[5])
         thrust = float(row[29])

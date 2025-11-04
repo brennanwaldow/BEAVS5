@@ -1,0 +1,42 @@
+name: Run Tests via Pytest
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+          pip install pybind11 ruff pytest
+          sudo apt-get install libboost-coroutine-dev clang-tidy
+      - name: Build
+        run: |
+          cd BEAVS5_Main
+          make
+      - name: Test with pytest
+        run: |
+          pytest -v -s
+      - name: Lint with clang-tidy
+        continue-on-error: true
+        run: |
+          # TODO: Improve this
+          clang-tidy $(find -name *.cpp ! -name board.cpp ! -name InterpolationLib.cpp -o -name *.h ! -name board.h ! -name InterpolationLib.h)
+      - name: Lint with ruff
+        run: |
+          pip install ruff
+          # TODO: Remove the cd
+          cd Test
+          ruff check

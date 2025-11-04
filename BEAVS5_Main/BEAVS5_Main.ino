@@ -8,14 +8,14 @@ Servo: DS3235
 */
 
 // -----   Libraries   -----
-#include <Wire.h>
+#include "InterpolationLib.h"
+#include <Adafruit_BMP3XX.h>
+#include <Adafruit_BNO055.h>
+#include <Adafruit_Sensor.h>
 #include <SPI.h>
 #include <SdFat.h>
-#include <Adafruit_Sensor.h>
-#include "Adafruit_BMP3XX.h"
-#include <Adafruit_BNO055.h>
+#include <Wire.h>
 #include <utility/imumaths.h>
-#include "InterpolationLib.h"
 
 
 // Utility
@@ -183,12 +183,12 @@ long datacoll_timer = 0;  // [ms]
 //float datacoll_time_interval = 2;       // [s]
 //float datacoll_extension = 12.5;        // [%]
 
-int extension_index = 0;               // [#]
-float extensions[] = { .5, .7, .87 };   // [%]
-float waits[] = { 2, 2, 2, 2, 2, 2 };  // [s]
-//t=0 u=0,t=0.5 u=.3, dt=3
+int extension_index=0;                       // [#]
+float extensions[3]={.3,.5,.9};    // [%]
+float waits[6]={2,2,2,2,2,2};      // [s]
+//t=0 u=0,t=0.5 u=.3, dt=3  
 
-long interupt_time = 0;
+float interupt_time=0;
 
 int max_extension_index = sizeof(waits) / sizeof(float);
 
@@ -275,6 +275,10 @@ void setup() {
     SD_failure = false;
     digitalWrite(LED_pin_uSD_OK, HIGH);
 
+    // Make data and log directories in case they don't exist
+    SD.mkdir("Logs");
+    SD.mkdir("Data");
+
     // Search for the first available log slot
     for (int i = 1; i < 10000; i++) {
       String filename = "Logs/log_" + String(i) + ".txt";
@@ -348,30 +352,6 @@ void loop() {
 
 // Core 2
 void loop1() {
-  switch (flight_phase) {
-    case PREFLIGHT:
-      preflight_loop(2);
-      break;
-    case DISARMED:
-      disarmed_loop(2);
-      break;
-    case ARMED:
-      ready_loop(2);
-      break;
-    case FLIGHT:
-      flight_loop(2);
-      break;
-    case OVERSHOOT:
-      overshoot_loop(2);
-      break;
-    case COAST:
-      coast_loop(2);
-      break;
-    case DESCENT:
-      descend_loop(2);
-      break;
-  }
-
   delay(5);
 }
 
@@ -393,7 +373,10 @@ void preflight_loop(int core) {
     // TODO: disable telemetry write on ground for final flight
     //write_telemetry();
   } else if (core == 2) {
-    preflight();
+    // This seems to be a bug so I commented it out
+    // As it sets the flight state to preflight
+    // If this runs at a weird time the rocket could stay in preflight
+    // preflight();
   }
 }
 
@@ -813,7 +796,7 @@ void calculate_telemetry() {
   float speed_of_sound = (-0.003938991248485773 * altitude) + 345.82471162249857;
   float Mach = abs(velocity) / speed_of_sound;
   float Cd_rocket = get_Cd(Mach);
-  float air_density = (-4.224962710944224e-14 * pow(altitude, 3) + 4.1628470681419666e-09 * pow(altitude, 2) + (-0.00011736669958683132 * altitude) + 1.2251486249604124);
+  float air_density = get_air_density(altitude);
 
   float Cd_beavs = 4.8 * (sqrt(A_Beavs / A_ref)) * blade_modulation;
   float Cd = Cd_rocket + (Cd_beavs * (A_Beavs / A_ref));
@@ -1082,8 +1065,8 @@ void get_trolled_idiot() {
 
 float gravity(float altitude) {  // altitude [meters]
   // Range of polynomial validity
-  if (altitude < 1380.00067880291) return 9.800601153885829;
-  if (altitude > 6575.6628767) return 9.784637022898936;
+  if (altitude < 1380.0) return 9.800867163381014;
+  if (altitude > 4248.1981852) return 9.792050408460742;
 
   // These constants are obtained from ../Utilities/OpenRocket Extractors/gravity_extractor.py using the OpenRocket simulation
   double consts[] = {
@@ -1958,27 +1941,27 @@ float get_thrust(float time) {
 
 float get_mass(float time) {  // [ms]
   // Range of polynomial validity
-  if (time < 0.0) return 7.976;
-  if (time > 3000.0) return 6.576;
+  if (time < 0.0) return 7.975722264;
+  if (time > 3000.0) return 6.575722264;
 
   // These constants are obtained from ../Utilities/OpenRocket Extractors/mass_extractor.py using the OpenRocket simulation
   double consts[] = {
-    1.9982731609414278e-47,
-    -4.337053027546156e-43,
-    4.22812688873407e-39,
-    -2.4468506970588034e-35,
-    9.360444333087315e-32,
-    -2.4950590471432615e-28,
-    4.759719269345194e-25,
-    -6.571765614846873e-22,
-    6.566409907308671e-19,
-    -4.699987435987095e-16,
-    2.360378981188635e-13,
-    -8.039864996231402e-11,
-    1.7585314845980733e-08,
-    -2.2171119079858655e-06,
-    -0.0005257900955843976,
-    7.977756150682098,
+    2.0309611842585456e-47,
+    -4.393529855827472e-43,
+    4.267466405834632e-39,
+    -2.4595417573038367e-35,
+    9.366783040290307e-32,
+    -2.4846564086767624e-28,
+    4.715830375829299e-25,
+    -6.478247386293624e-22,
+    6.44302088401122e-19,
+    -4.595174262952143e-16,
+    2.3038097187627867e-13,
+    -7.855550090836884e-11,
+    1.7257808859446083e-08,
+    -2.191836425622587e-06,
+    -0.0005256598652472943,
+    7.977644414076146,
   };
 
   int poly_order = 15;
@@ -1990,6 +1973,36 @@ float get_mass(float time) {  // [ms]
   }
 
   return (float)result;
+}
+
+float get_speed_of_sound(float altitude) { // [meters]
+  // Obtain constants from Utilities/OpenRocket Extractors/speed_of_sound_extractor.py
+  double consts[] = {
+    -0.003938999999002495,   // P1
+    340.3888999975182,   // P2 
+  };
+
+  return (consts[0] * altitude) + consts[1];
+}
+
+float get_air_density(float altitude) { // [meters]
+  // Obtain constants from Utilities/OpenRocket Extractors/air_density_extractor.py
+  double consts[] = {
+    -2.264299527866771e-14,   // P1
+    3.924144825527836e-09,   // P2
+    -0.00011660426675530942,   // P3
+    1.2244633817701025,   // P4
+  };
+
+  int poly_order = 3;
+  double result = 0;
+
+  // pain
+  for (int i = 0; i < poly_order + 1; i++) {
+    result = result + ((double) pow(altitude, poly_order - i) * consts[i]);
+  }
+
+  return (float) result;
 }
 
 
